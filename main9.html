@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LUNARSE X — Step 04 · Analysis (Earth / Mars)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --font-display: 'Press Start 2P', monospace;
+      --font-ui: 'Silkscreen', monospace;
+
+      --bg-color: #060919;
+      --card-bg: rgba(13, 18, 43, 0.78);
+      --card-bg-inner: rgba(8, 12, 30, 0.75);
+      --text-primary: #f4f6ff;
+      --text-secondary: #8c96bd;
+      --border-color: rgba(110, 128, 196, 0.25);
+      --border-glow: rgba(245, 162, 84, 0.85);
+      --accent-orange: #f59b4c;
+      --accent-orange-hover: #ffad63;
+      --accent-orange-text: #140d05;
+      --pill-bg: #ffffff;
+      --pill-text: #0b0f26;
+      --gauge-track: rgba(255, 255, 255, 0.1);
+      --btn-secondary-bg: rgba(28, 36, 74, 0.9);
+      --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+
+    [data-theme="light"] {
+      --bg-color: #eef2f9;
+      --card-bg: rgba(255, 255, 255, 0.88);
+      --card-bg-inner: rgba(241, 245, 253, 0.9);
+      --text-primary: #101733;
+      --text-secondary: #525f85;
+      --border-color: rgba(35, 52, 105, 0.18);
+      --border-glow: #e8832a;
+      --accent-orange: #ea862f;
+      --accent-orange-hover: #d8741e;
+      --accent-orange-text: #ffffff;
+      --pill-bg: #101733;
+      --pill-text: #ffffff;
+      --gauge-track: rgba(16, 23, 51, 0.12);
+      --btn-secondary-bg: #dce3f2;
+      --shadow-card: 0 10px 28px rgba(24, 39, 75, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-ui);
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background-color 0.35s ease, color 0.35s ease;
+      position: relative;
+      text-transform: uppercase;
+    }
+
+    button {
+      font-family: var(--font-ui);
+      cursor: pointer;
+      border: none;
+      outline: none;
+      text-transform: uppercase;
+    }
+
+    #starfield-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* =========================================================
+       TOP NAVIGATION BAR
+       ========================================================= */
+    .top-nav {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 32px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pixel-logo {
+      display: grid;
+      grid-template-columns: repeat(2, 6px);
+      gap: 2px;
+    }
+
+    .pixel-logo span {
+      width: 6px;
+      height: 6px;
+      background: var(--text-primary);
+      display: block;
+    }
+
+    .pixel-logo span:nth-child(2) {
+      background: var(--accent-orange);
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 1px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-tab {
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.72rem;
+      padding: 6px 2px;
+      position: relative;
+      transition: color 0.2s ease;
+    }
+
+    .nav-tab:hover,
+    .nav-tab.active {
+      color: var(--text-primary);
+    }
+
+    .nav-tab.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -4px;
+      height: 2px;
+      background: var(--text-primary);
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .control-btn {
+      background: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+
+    .control-btn:hover {
+      border-color: var(--accent-orange);
+      transform: translateY(-1px);
+    }
+
+    .control-btn.audio-active {
+      border-color: var(--accent-orange);
+      color: var(--accent-orange);
+    }
+
+    .live-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      background: var(--btn-secondary-bg);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #38e58c;
+      box-shadow: 0 0 8px #38e58c;
+      animation: pulseDot 1.8s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.85); }
+    }
+
+    /* =========================================================
+       3-COLUMN DASHBOARD GRID
+       ========================================================= */
+    .dashboard-grid {
+      position: relative;
+      z-index: 5;
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 22px 32px 36px;
+      display: grid;
+      grid-template-columns: 275px 1fr 285px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .sidebar-left,
+    .sidebar-right {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 18px;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-card);
+      transition: background-color 0.35s ease, border-color 0.35s ease;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .badge-outline {
+      font-size: 0.58rem;
+      padding: 3px 7px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+    }
+
+    /* =========================================================
+       TOP STAT SPLIT CARDS (LEFT & RIGHT SIDEBARS)
+       ========================================================= */
+    .split-metric-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+    }
+
+    .split-col {
+      flex: 1;
+    }
+
+    .split-divider {
+      width: 1px;
+      height: 42px;
+      background: var(--border-color);
+      margin: 0 12px;
+    }
+
+    .metric-big {
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      margin-bottom: 6px;
+    }
+
+    .metric-big .unit {
+      font-family: var(--font-ui);
+      font-size: 0.62rem;
+      color: var(--text-secondary);
+      margin-left: 2px;
+    }
+
+    .metric-sub {
+      font-size: 0.62rem;
+      color: var(--text-secondary);
+    }
+
+    /* =========================================================
+       MISSION STATUS GAUGE CARD
+       ========================================================= */
+    .ring-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 12px 0 18px;
+    }
+
+    .outer-dashed-ring {
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
+      border: 1px dashed var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-circle {
+      width: 102px;
+      height: 102px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffbe85, #e88446);
+      box-shadow: 0 0 28px rgba(245, 155, 76, 0.35);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+
+    .ring-percent {
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+    }
+
+    .ring-label {
+      font-size: 0.56rem;
+      margin-top: 5px;
+      opacity: 0.92;
+    }
+
+    .kv-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .kv-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.68rem;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .kv-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .kv-key {
+      color: var(--text-secondary);
+    }
+
+    .kv-val {
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* =========================================================
+       3D PROJECTION CARD
+       ========================================================= */
+    .wireframe-box {
+      height: 68px;
+      margin: 10px 0 14px;
+      color: var(--text-secondary);
+    }
+
+    .terrain-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill-white {
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      font-size: 0.58rem;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    /* =========================================================
+       CENTER STAGE (STEP 04 · ANALYSIS — EARTH / MARS)
+       ========================================================= */
+    .center-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .step-pill {
+      display: inline-block;
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      font-size: 0.64rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      line-height: 1.38;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    .hero-subtitle {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Middle 2-Column Split: Map + Selected Site Details */
+    .analysis-main-split {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 16px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .map-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 280px;
+    }
+
+    .map-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .map-label {
+      font-size: 0.64rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+    }
+
+    .dim-toggle {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dim-btn {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.62rem;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .dim-btn.active {
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      font-weight: 700;
+    }
+
+    .coordinate-viewport {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 6px 0;
+    }
+
+    .grid-svg {
+      width: 100%;
+      height: 165px;
+      transition: transform 0.35s ease;
+    }
+
+    .map-footer-tag {
+      align-self: flex-start;
+      font-size: 0.58rem;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 5px 10px;
+      background: var(--card-bg-inner);
+    }
+
+    /* Selected Site Detail Card */
+    .selected-site-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .site-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .site-rank-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .site-overline {
+      font-size: 0.58rem;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .site-name-title {
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .detail-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.65rem;
+      padding-bottom: 9px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .detail-k {
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .detail-v {
+      font-weight: 700;
+      text-align: right;
+      line-height: 1.35;
+    }
+
+    .coord-bar-wrap {
+      margin-top: 8px;
+    }
+
+    .coord-bar-track {
+      width: 100%;
+      height: 4px;
+      background: var(--gauge-track);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .coord-bar-fill {
+      width: 78%;
+      height: 100%;
+      background: linear-gradient(90deg, #4b8df8, var(--accent-orange));
+      border-radius: 4px;
+    }
+
+    /* Bottom 3 Rank Cards */
+    .rank-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .rank-card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .rank-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .rank-card.selected {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 22px rgba(245, 155, 76, 0.22);
+    }
+
+    .rank-card-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.62rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .rank-score {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    .rank-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .rank-desc {
+      font-size: 0.58rem;
+      color: var(--text-secondary);
+      line-height: 1.35;
+    }
+
+    /* Bottom Controls Row */
+    .bottom-controls-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-disclaimer {
+      font-size: 0.6rem;
+      color: var(--text-secondary);
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      border-radius: 8px;
+    }
+
+    .action-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .action-btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      background: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      transition: transform 0.15s ease, border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent-orange);
+      transform: translateY(-1px);
+    }
+
+    /* =========================================================
+       RIGHT SIDEBAR (VIEW REFERENCE CARD)
+       ========================================================= */
+    .view-toggle-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .view-pill {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.66rem;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .view-pill.active {
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      font-weight: 700;
+    }
+
+    .planet-stats-block {
+      margin-bottom: 18px;
+    }
+
+    .planet-stats-block:last-child {
+      margin-bottom: 0;
+    }
+
+    .stat-header-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .stat-bar-track {
+      width: 100%;
+      height: 4px;
+      background: var(--gauge-track);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .stat-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .earth-fill {
+      background: linear-gradient(90deg, #4b8df8, var(--accent-orange));
+    }
+
+    .mars-fill {
+      background: linear-gradient(90deg, #f58c62, #e85d44);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.66rem;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-k {
+      color: var(--text-secondary);
+    }
+
+    .stat-v {
+      font-weight: 700;
+    }
+
+    @media (max-width: 1200px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      .sidebar-left,
+      .sidebar-right {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+      .analysis-main-split,
+      .rank-cards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="starfield-canvas" aria-hidden="true"></canvas>
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="top-nav">
+    <div class="brand">
+      <div class="pixel-logo" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <span class="brand-name">LUNARSE X</span>
+    </div>
+
+    <nav class="nav-tabs" aria-label="Mission Phases">
+      <button class="nav-tab" onclick="window.location.href='main3.html'">SETUP</button>
+      <button class="nav-tab" onclick="window.location.href='mainmars.html'">ANALOG FINDER</button>
+      <button class="nav-tab" onclick="window.location.href='main4.html'">DETAILS</button>
+      <button class="nav-tab active">ANALYSIS</button>
+      <button class="nav-tab" onclick="window.location.href='main7.html'">REPORTS</button>
+    </nav>
+
+    <div class="nav-controls">
+      <!-- Sound Icon Toggle Button -->
+      <button id="audio-toggle" class="control-btn" aria-label="Toggle Telemetry Sound">
+        <svg id="sound-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path id="sound-wave-1" d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          <path id="sound-wave-2" d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+        <span id="audio-label">AUDIO</span>
+      </button>
+
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" class="control-btn" aria-label="Toggle Dark and Light Mode">
+        <span id="theme-icon">☀</span> <span id="theme-label">LIGHT</span>
+      </button>
+
+      <!-- Live Indicator -->
+      <div class="live-pill">
+        <span>UPD: LIVE</span>
+        <span class="live-dot"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN 3-COLUMN DASHBOARD -->
+  <main class="dashboard-grid">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar-left">
+      <!-- Gravity Comparison -->
+      <section class="card split-metric-card">
+        <div class="split-col">
+          <div class="metric-big">9.81<span class="unit">M/S²</span></div>
+          <div class="metric-sub">EARTH GRAVITY</div>
+        </div>
+        <div class="split-divider"></div>
+        <div class="split-col">
+          <div class="metric-big">3.72<span class="unit">M/S²</span></div>
+          <div class="metric-sub">MARS GRAVITY</div>
+        </div>
+      </section>
+
+      <!-- Mission Status Card -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">MISSION STATUS</h2>
+          <span class="badge-outline">ANALYZED</span>
+        </div>
+
+        <div class="ring-wrapper">
+          <div class="outer-dashed-ring">
+            <div class="progress-circle">
+              <span class="ring-percent">80%</span>
+              <span class="ring-label">COMPLETE</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kv-list">
+          <div class="kv-row">
+            <span class="kv-key">PHASE</span>
+            <span class="kv-val">ANALYSIS</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-key">MISSION</span>
+            <span class="kv-val">MARS EXPLORATION</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-key">TESTBED</span>
+            <span class="kv-val" id="left-testbed">EASTERN DESERT</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3D Projection Card -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">3D PROJECTION</h2>
+          <span class="badge-outline">REFERENCE</span>
+        </div>
+
+        <div class="wireframe-box">
+          <svg viewBox="0 0 260 65" class="terrain-svg" preserveAspectRatio="none">
+            <path d="M0,45 Q35,20 70,42 T140,35 T210,48 T260,30" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+            <path d="M0,38 Q45,55 85,30 T165,45 T230,25 T260,40" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+            <path d="M0,52 Q50,28 100,48 T180,28 T260,46" fill="none" stroke="var(--accent-orange)" stroke-width="1.5" opacity="0.85"/>
+            <path d="M0,26 Q60,46 120,24 T200,42 T260,22" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+          </svg>
+        </div>
+
+        <div class="pill-group">
+          <span class="pill-white">BASALT</span>
+          <span class="pill-white">HEMATITE</span>
+          <span class="pill-white">PERCHLORATE</span>
+        </div>
+      </section>
+    </aside>
+
+    <!-- CENTER STAGE -->
+    <section class="center-stage">
+      <div class="hero-header">
+        <div class="step-pill">STEP 04 · ANALYSIS</div>
+        <h1 class="hero-title">EARTH /<br>MARS</h1>
+        <p class="hero-subtitle">TOP 3 EARTH ANALOG LOCATIONS FOR MARS EXPLORATION MISSION.</p>
+      </div>
+
+      <!-- Map & Selected Site Split -->
+      <div class="analysis-main-split">
+        <!-- Coordinate Grid Card -->
+        <div class="card map-card">
+          <div class="map-top-bar">
+            <span class="map-label">MAP · ARCGIS / CESIUM HOOK</span>
+            <div class="dim-toggle">
+              <button class="dim-btn active" data-dim="3d">3D</button>
+              <button class="dim-btn" data-dim="2d">2D</button>
+            </div>
+          </div>
+
+          <div class="coordinate-viewport">
+            <svg id="coord-grid-svg" class="grid-svg" viewBox="0 0 320 170">
+              <!-- Skewed 3D-style grid lines -->
+              <g id="grid-lines" stroke="rgba(140, 150, 189, 0.25)" stroke-width="1">
+                <line x1="65" y1="30" x2="275" y2="30" />
+                <line x1="50" y1="60" x2="260" y2="60" />
+                <line x1="35" y1="90" x2="245" y2="90" />
+                <line x1="20" y1="120" x2="230" y2="120" />
+                <line x1="5" y1="150" x2="215" y2="150" />
+
+                <line x1="65" y1="30" x2="5" y2="150" />
+                <line x1="117" y1="30" x2="57" y2="150" />
+                <line x1="170" y1="30" x2="110" y2="150" />
+                <line x1="222" y1="30" x2="162" y2="150" />
+                <line x1="275" y1="30" x2="215" y2="150" />
+              </g>
+
+              <!-- Plot Point 2: Mauna Kea -->
+              <g class="map-pin" data-site="1" style="cursor:pointer;">
+                <circle cx="72" cy="84" r="4" fill="#f58c62" />
+                <text x="82" y="87" fill="var(--text-secondary)" font-size="7.5" font-family="Silkscreen">MAUNA KEA</text>
+              </g>
+
+              <!-- Plot Point 3: Atacama Desert -->
+              <g class="map-pin" data-site="2" style="cursor:pointer;">
+                <circle cx="106" cy="112" r="4" fill="#f58c62" />
+                <text x="116" y="115" fill="var(--text-secondary)" font-size="7.5" font-family="Silkscreen">ATACAMA DESERT</text>
+              </g>
+
+              <!-- Plot Point 1: Eastern Desert (Active) -->
+              <g class="map-pin" data-site="0" style="cursor:pointer;">
+                <circle id="active-ring" cx="176" cy="88" r="11" fill="rgba(245, 155, 76, 0.18)" stroke="#f59b4c" stroke-width="1.2" />
+                <circle id="active-dot" cx="176" cy="88" r="4.5" fill="#f59b4c" />
+                <text id="active-pin-label" x="192" y="91" fill="var(--text-primary)" font-size="7.5" font-family="Silkscreen">EASTERN DESERT</text>
+              </g>
+            </svg>
+          </div>
+
+          <div class="map-footer-tag">SAMPLE COORDINATE PLOT</div>
+        </div>
+
+        <!-- Selected Site Details Card -->
+        <div class="card selected-site-card">
+          <div>
+            <div class="site-head">
+              <div class="site-rank-badge" id="detail-num">01</div>
+              <div>
+                <div class="site-overline">SELECTED SITE</div>
+                <h2 class="site-name-title" id="detail-title">EASTERN DESERT,<br>EGYPT</h2>
+              </div>
+            </div>
+
+            <div class="detail-rows">
+              <div class="detail-row">
+                <span class="detail-k">SIMILARITY</span>
+                <span class="detail-v" id="detail-sim">94.8%</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-k">TERRAIN</span>
+                <span class="detail-v" id="detail-terrain">HYPER-ARID, FRACTURED<br>GRANITE & ALLUVIAL OUTWASH</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-k">WHY IT MATCHES</span>
+                <span class="detail-v" id="detail-match">DRY WEATHERING AND<br>ROCKY REGOLITH-LIKE<br>SURFACES</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-k">COORDINATES</span>
+                <span class="detail-v" id="detail-coords">26°, 33°</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="coord-bar-wrap">
+            <div class="coord-bar-track">
+              <div class="coord-bar-fill" id="detail-bar" style="width: 94.8%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Ranked Analog Cards -->
+      <div class="rank-cards-grid">
+        <article class="rank-card selected" data-site="0">
+          <div class="rank-card-top">
+            <span>RANK 01</span>
+            <span class="rank-score">94.8%</span>
+          </div>
+          <h3 class="rank-title">EASTERN DESERT, EGYPT</h3>
+          <p class="rank-desc">HYPER-ARID, FRACTURED GRANITE & ALLUVIAL OUTWASH</p>
+        </article>
+
+        <article class="rank-card" data-site="1">
+          <div class="rank-card-top">
+            <span>RANK 02</span>
+            <span class="rank-score">89.2%</span>
+          </div>
+          <h3 class="rank-title">MAUNA KEA, HAWAII</h3>
+          <p class="rank-desc">BASALTIC SCORIA, CINDER CONES, HIGH UV</p>
+        </article>
+
+        <article class="rank-card" data-site="2">
+          <div class="rank-card-top">
+            <span>RANK 03</span>
+            <span class="rank-score">82.5%</span>
+          </div>
+          <h3 class="rank-title">ATACAMA DESERT, CHILE</h3>
+          <p class="rank-desc">SALT PAN CRUST, NEAR-ZERO MOISTURE</p>
+        </article>
+      </div>
+
+      <!-- Bottom Controls -->
+      <div class="bottom-controls-bar">
+        <div class="sample-disclaimer">SAMPLE DATA · NOT ARCGIS OUTPUT</div>
+        <div class="action-btn-group">
+          <button class="action-btn" id="btn-prev">&lt; PREV</button>
+          <button class="action-btn" id="btn-rerun">↻ RE-RUN</button>
+          <button class="action-btn" id="btn-next">NEXT &gt;</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="sidebar-right">
+      <!-- Progress & Analogs Split Card -->
+      <section class="card split-metric-card">
+        <div class="split-col">
+          <div class="metric-big">80<span class="unit">%</span></div>
+          <div class="metric-sub">PROGRESS</div>
+        </div>
+        <div class="split-divider"></div>
+        <div class="split-col">
+          <div class="metric-big">3</div>
+          <div class="metric-sub">ANALOGS</div>
+        </div>
+      </section>
+
+      <!-- View Reference Card -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">VIEW</h2>
+          <span class="badge-outline">REFERENCE</span>
+        </div>
+
+        <div class="view-toggle-pills">
+          <button class="view-pill active" data-view="structure">STRUCTURE</button>
+          <button class="view-pill" data-view="composition">COMPOSITION</button>
+        </div>
+
+        <!-- Earth Section -->
+        <div class="planet-stats-block">
+          <div class="stat-header-row">
+            <span>EARTH</span>
+            <span>9.81 M/S²</span>
+          </div>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill earth-fill" style="width: 100%;"></div>
+          </div>
+
+          <div class="stat-row">
+            <span class="stat-k" id="earth-k1">TEMP</span>
+            <span class="stat-v" id="earth-v1">15 °C AVG</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-k" id="earth-k2">PRESSURE</span>
+            <span class="stat-v" id="earth-v2">101.3 KPA</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-k" id="earth-k3">DAY</span>
+            <span class="stat-v" id="earth-v3">24 H</span>
+          </div>
+        </div>
+
+        <!-- Mars Section -->
+        <div class="planet-stats-block">
+          <div class="stat-header-row">
+            <span>MARS</span>
+            <span>3.72 M/S²</span>
+          </div>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill mars-fill" style="width: 38%;"></div>
+          </div>
+
+          <div class="stat-row">
+            <span class="stat-k" id="mars-k1">TEMP</span>
+            <span class="stat-v" id="mars-v1">-63 °C AVG</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-k" id="mars-k2">PRESSURE</span>
+            <span class="stat-v" id="mars-v2">0.61 KPA</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-k" id="mars-k3">DAY</span>
+            <span class="stat-v" id="mars-v3">24.6 H</span>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      /* =========================================================
+         WEB AUDIO SYNTHESIZER FOR SOUND ICON & TELEMETRY CLICKS
+         ========================================================= */
+      let audioCtx = null;
+      let audioEnabled = false;
+      const audioBtn = document.getElementById('audio-toggle');
+      const wave1 = document.getElementById('sound-wave-1');
+      const wave2 = document.getElementById('sound-wave-2');
+
+      function playTone(freq = 540, duration = 0.06) {
+        if (!audioEnabled) return;
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }
+
+      // Initialize muted visual state
+      wave1.style.opacity = '0.25';
+      wave2.style.opacity = '0.25';
+
+      audioBtn.addEventListener('click', () => {
+        audioEnabled = !audioEnabled;
+        if (audioEnabled) {
+          audioBtn.classList.add('audio-active');
+          wave1.style.opacity = '1';
+          wave2.style.opacity = '1';
+          playTone(680, 0.09);
+        } else {
+          audioBtn.classList.remove('audio-active');
+          wave1.style.opacity = '0.25';
+          wave2.style.opacity = '0.25';
+        }
+      });
+
+      /* =========================================================
+         STARFIELD BACKGROUND
+         ========================================================= */
+      const canvas = document.getElementById('starfield-canvas');
+      const ctx = canvas.getContext('2d');
+      let stars = [];
+      let currentTheme = 'dark';
+
+      const starColorsDark = ['#ffffff', '#ffe4b5', '#9ec5ff', '#f59b4c'];
+      const starColorsLight = ['#e69d35', '#3b82f6', '#7c6cf0', '#f59e0b'];
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        createStars();
+      }
+
+      function createStars() {
+        const count = Math.floor((canvas.width * canvas.height) / 7000);
+        const palette = currentTheme === 'dark' ? starColorsDark : starColorsLight;
+        stars = Array.from({ length: count }, () => ({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 2.2 + 0.8,
+          baseAlpha: Math.random() * 0.7 + 0.25,
+          twinkleSpeed: Math.random() * 0.04 + 0.01,
+          phase: Math.random() * Math.PI * 2,
+          driftY: (Math.random() - 0.5) * 0.12,
+          color: palette[Math.floor(Math.random() * palette.length)]
+        }));
+      }
+
+      function animateStars() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        stars.forEach((s) => {
+          s.phase += s.twinkleSpeed;
+          s.y += s.driftY;
+          if (s.y < 0) s.y = canvas.height;
+          if (s.y > canvas.height) s.y = 0;
+
+          const alpha = Math.max(0.1, Math.min(1, s.baseAlpha + Math.sin(s.phase) * 0.45));
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = s.color;
+          ctx.shadowBlur = currentTheme === 'dark' ? 10 : 6;
+          ctx.shadowColor = s.color;
+          const pxSize = Math.round(s.size * 1.4);
+          ctx.fillRect(Math.round(s.x), Math.round(s.y), pxSize, pxSize);
+          ctx.restore();
+        });
+        requestAnimationFrame(animateStars);
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+      animateStars();
+
+      /* =========================================================
+         THEME TOGGLE
+         ========================================================= */
+      const themeToggleBtn = document.getElementById('theme-toggle');
+      const themeIcon = document.getElementById('theme-icon');
+      const themeLabel = document.getElementById('theme-label');
+
+      themeToggleBtn.addEventListener('click', () => {
+        playTone(580, 0.06);
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        if (currentTheme === 'light') {
+          themeIcon.textContent = '☾';
+          themeLabel.textContent = 'DARK';
+        } else {
+          themeIcon.textContent = '☀';
+          themeLabel.textContent = 'LIGHT';
+        }
+        createStars();
+      });
+
+      /* =========================================================
+         ANALOG SITE SELECTION & INTERACTIVE PLOT
+         ========================================================= */
+      const sites = [
+        {
+          num: '01',
+          shortName: 'EASTERN DESERT',
+          title: 'EASTERN DESERT,<br>EGYPT',
+          sim: '94.8%',
+          terrain: 'HYPER-ARID, FRACTURED<br>GRANITE & ALLUVIAL OUTWASH',
+          match: 'DRY WEATHERING AND<br>ROCKY REGOLITH-LIKE<br>SURFACES',
+          coords: '26°, 33°',
+          cx: 176,
+          cy: 88,
+          labelX: 192,
+          labelY: 91
+        },
+        {
+          num: '02',
+          shortName: 'MAUNA KEA',
+          title: 'MAUNA KEA,<br>HAWAII',
+          sim: '89.2%',
+          terrain: 'BASALTIC SCORIA, CINDER<br>CONES & TEPHRA FIELDS',
+          match: 'IRON-RICH VOLCANIC<br>MINERALOGY & HIGH<br>SOLAR RADIATION',
+          coords: '19.8°, -155.5°',
+          cx: 72,
+          cy: 84,
+          labelX: 82,
+          labelY: 87
+        },
+        {
+          num: '03',
+          shortName: 'ATACAMA DESERT',
+          title: 'ATACAMA DESERT,<br>CHILE',
+          sim: '82.5%',
+          terrain: 'SALT PAN CRUST, SULFATES<br>& HYPER-ARID REGOLITH',
+          match: 'PERCHLORATE CHEMISTRY<br>& EXTREME DESICCATION<br>PROFILES',
+          coords: '-24.5°, -69.2°',
+          cx: 106,
+          cy: 112,
+          labelX: 116,
+          labelY: 115
+        }
+      ];
+
+      const rankCards = document.querySelectorAll('.rank-card');
+      const mapPins = document.querySelectorAll('.map-pin');
+
+      function selectSite(idx) {
+        playTone(620, 0.06);
+        const s = sites[idx];
+        rankCards.forEach((c, i) => c.classList.toggle('selected', i === idx));
+
+        document.getElementById('detail-num').textContent = s.num;
+        document.getElementById('detail-title').innerHTML = s.title;
+        document.getElementById('detail-sim').textContent = s.sim;
+        document.getElementById('detail-terrain').innerHTML = s.terrain;
+        document.getElementById('detail-match').innerHTML = s.match;
+        document.getElementById('detail-coords').textContent = s.coords;
+        document.getElementById('detail-bar').style.width = s.sim;
+        document.getElementById('left-testbed').textContent = s.shortName;
+
+        const ring = document.getElementById('active-ring');
+        const dot = document.getElementById('active-dot');
+        const label = document.getElementById('active-pin-label');
+        ring.setAttribute('cx', s.cx);
+        ring.setAttribute('cy', s.cy);
+        dot.setAttribute('cx', s.cx);
+        dot.setAttribute('cy', s.cy);
+        label.setAttribute('x', s.labelX);
+        label.setAttribute('y', s.labelY);
+        label.textContent = s.shortName;
+      }
+
+      rankCards.forEach((card) => {
+        card.addEventListener('click', () => selectSite(parseInt(card.dataset.site)));
+      });
+
+      mapPins.forEach((pin) => {
+        pin.addEventListener('click', () => selectSite(parseInt(pin.dataset.site)));
+      });
+
+      /* 3D / 2D Map Toggle */
+      document.querySelectorAll('.dim-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          playTone(500, 0.05);
+          document.querySelectorAll('.dim-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const svg = document.getElementById('coord-grid-svg');
+          svg.style.transform = btn.dataset.dim === '2d' ? 'rotateX(32deg) scale(0.95)' : 'none';
+        });
+      });
+
+      /* Structure / Composition Toggle (Earth vs Mars) */
+      document.querySelectorAll('.view-pill').forEach((pill) => {
+        pill.addEventListener('click', () => {
+          playTone(520, 0.05);
+          document.querySelectorAll('.view-pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+
+          if (pill.dataset.view === 'structure') {
+            document.getElementById('earth-k1').textContent = 'TEMP';
+            document.getElementById('earth-v1').textContent = '15 °C AVG';
+            document.getElementById('earth-k2').textContent = 'PRESSURE';
+            document.getElementById('earth-v2').textContent = '101.3 KPA';
+            document.getElementById('earth-k3').textContent = 'DAY';
+            document.getElementById('earth-v3').textContent = '24 H';
+
+            document.getElementById('mars-k1').textContent = 'TEMP';
+            document.getElementById('mars-v1').textContent = '-63 °C AVG';
+            document.getElementById('mars-k2').textContent = 'PRESSURE';
+            document.getElementById('mars-v2').textContent = '0.61 KPA';
+            document.getElementById('mars-k3').textContent = 'DAY';
+            document.getElementById('mars-v3').textContent = '24.6 H';
+          } else {
+            document.getElementById('earth-k1').textContent = 'NITROGEN';
+            document.getElementById('earth-v1').textContent = '78.1%';
+            document.getElementById('earth-k2').textContent = 'OXYGEN';
+            document.getElementById('earth-v2').textContent = '20.9%';
+            document.getElementById('earth-k3').textContent = 'SILICA';
+            document.getElementById('earth-v3').textContent = '59.1% CRUST';
+
+            document.getElementById('mars-k1').textContent = 'CO₂ ATMO';
+            document.getElementById('mars-v1').textContent = '95.3%';
+            document.getElementById('mars-k2').textContent = 'IRON OXIDE';
+            document.getElementById('mars-v2').textContent = '17.9% REGOLITH';
+            document.getElementById('mars-k3').textContent = 'SULFATES';
+            document.getElementById('mars-v3').textContent = '6.2%';
+          }
+        });
+      });
+
+      /* Action Buttons */
+      document.getElementById('btn-prev').addEventListener('click', () => {
+        playTone(460, 0.06);
+        window.location.href = 'main4.html';
+      });
+
+      document.getElementById('btn-rerun').addEventListener('click', () => {
+        playTone(760, 0.08);
+        selectSite(0);
+      });
+
+      document.getElementById('btn-next').addEventListener('click', () => {
+        playTone(680, 0.06);
+        window.location.href = 'main7.html';
+      });
+    });
+  </script>
+</body>
+</html>

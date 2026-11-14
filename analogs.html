@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUNARSE X | Planetary Analog Comparison</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        orbitron: ['"Press Start 2P"', 'monospace'],
+                        vt323: ['"VT323"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'VT323', monospace;
+            font-size: 1.25rem;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .font-orbitron { font-family: 'Press Start 2P', monospace; }
+        
+        #star-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .theme-card {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        html.dark body {
+            background-color: #020617;
+            color: #f1f5f9;
+        }
+        html.dark .theme-card {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(249, 115, 22, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            color: #e2e8f0;
+        }
+        html.dark .cyber-subbox {
+            background: rgba(2, 6, 23, 0.75);
+            border: 1px solid #1e293b;
+        }
+
+        html.light body {
+            background-color: #ffffff;
+            color: #0f172a;
+        }
+        html.light .theme-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            color: #0f172a;
+        }
+        html.light .cyber-subbox {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+        }
+        html.light .text-slate-300, 
+        html.light .text-slate-400 {
+            color: #475569 !important;
+        }
+        html.light .text-white {
+            color: #0f172a !important;
+        }
+
+        .img-comparison-container {
+            position: relative;
+            width: 100%;
+            max-width: 950px;
+            height: 520px;
+            overflow: hidden;
+            margin: 0 auto;
+            border-radius: 1rem;
+            box-shadow: 0 0 35px rgba(249, 115, 22, 0.25);
+            border: 1px solid rgba(249, 115, 22, 0.45);
+            cursor: ew-resize;
+        }
+        .img-comparison-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+        .img-back { z-index: 1; }
+        .img-front {
+            z-index: 2;
+            width: 50%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+        }
+        .img-front img {
+            width: 950px;
+            max-width: none;
+            height: 100%;
+            object-fit: cover;
+        }
+        .slider-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 4px;
+            background: #f97316;
+            z-index: 10;
+        }
+        .slider-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 44px;
+            height: 44px;
+            background: #0f172a;
+            border: 2px solid #f97316;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f97316;
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.6);
+        }
+
+        .tab-btn.active {
+            background: rgba(249, 115, 22, 0.25);
+            border-color: #f97316;
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
+        }
+
+        .cyber-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
+            border-radius: 0.75rem;
+        }
+        .cyber-table th, .cyber-table td {
+            padding: 10px 14px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 md:p-8 relative">
+
+    <canvas id="star-canvas"></canvas>
+
+    <div class="w-full max-w-5xl flex items-center justify-between z-20 mb-8">
+        <a href="main.html" class="theme-card px-5 py-2.5 rounded-xl border border-orange-500/50 bg-orange-500/10 hover:bg-orange-500/20 font-orbitron text-[10px] text-orange-400 transition-all flex items-center gap-2 shadow-lg">
+            <i class="fa-solid fa-arrow-left"></i> GO BACK
+        </a>
+
+        <div class="flex items-center gap-3">
+            <button onclick="toggleAudio()" title="Toggle Audio" class="theme-card px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/80 hover:border-orange-500 font-orbitron text-[10px] text-slate-300 hover:text-orange-400 transition-all flex items-center gap-2 cursor-pointer shadow-lg">
+                <i id="sound-icon" class="fa-solid fa-volume-xmark"></i> <span id="sound-text">AUDIO OFF</span>
+            </button>
+            <button onclick="toggleTheme()" class="theme-card px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/80 hover:border-orange-500 font-orbitron text-[10px] text-slate-300 hover:text-orange-400 transition-all flex items-center gap-2 cursor-pointer shadow-lg">
+                <i id="theme-icon" class="fa-solid fa-moon"></i> <span id="theme-text">DARK MODE</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="max-w-3xl text-center mb-8 z-20">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-orbitron text-[10px] tracking-widest uppercase mb-4">
+            <i class="fa-solid fa-satellite"></i> LUNARSE X ANALOG MATRIX
+        </div>
+        <h1 class="font-orbitron text-xl sm:text-2xl text-orange-500 mb-3 drop-shadow">Planetary Analog Comparison</h1>
+        <p class="text-slate-300 text-xl">Select a corridor and explore evaluated Earth testbeds matched against Shackleton Crater and Jezero Crater.</p>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-4 mb-10 z-20">
+        <button onclick="switchCorridor('moon')" id="tab-moon" class="theme-card tab-btn active px-6 py-3 rounded-xl border border-orange-500 bg-slate-900 font-orbitron text-xs text-white transition-all flex items-center gap-3 cursor-pointer shadow-md">
+            <i class="fa-solid fa-moon text-slate-300"></i> EARTH &harr; MOON CORRIDOR
+        </button>
+        <button onclick="switchCorridor('mars')" id="tab-mars" class="theme-card tab-btn px-6 py-3 rounded-xl border border-slate-700 bg-slate-900 font-orbitron text-xs text-slate-300 hover:text-white transition-all flex items-center gap-3 cursor-pointer shadow-md">
+            <i class="fa-solid fa-meteor text-orange-500"></i> EARTH &harr; MARS CORRIDOR
+        </button>
+    </div>
+
+    <!-- MOON CORRIDOR -->
+    <div id="corridor-moon" class="w-full max-w-5xl flex flex-col items-center z-20 space-y-12">
+        
+        <!-- CANDIDATE AREA 1: Altai -->
+        <div class="w-full flex flex-col items-center">
+            <div class="w-full max-w-4xl mb-4 flex items-center justify-between px-2">
+                <h2 class="font-orbitron text-sm sm:text-base text-orange-500 flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot"></i> Candidate Area 1: Altai Region (Mongolia-China Border)
+                </h2>
+                <span class="text-xs font-orbitron px-3 py-1 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40">RANK: 1ST</span>
+            </div>
+
+            <div class="img-comparison-container" id="comparisonSliderMoon1">
+                <div class="absolute inset-0 img-back">
+                    <img src="Sheklton.jpeg" alt="Shackleton Crater Moon">
+                    <span class="absolute bottom-4 right-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-orange-500/50 font-orbitron text-[10px] text-orange-400">MOON: SHACKLETON CRATER</span>
+                </div>
+                <div class="img-front" id="frontImageWrapperMoon1">
+                    <img src="Atai.jpeg" alt="Earth Analog Altai" id="frontImgElementMoon1">
+                    <span class="absolute bottom-4 left-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-sky-500/50 font-orbitron text-[10px] text-sky-400">EARTH ANALOG: ALTAI REGION</span>
+                </div>
+                <div class="slider-handle" id="sliderHandleMoon1" style="left: 50%;">
+                    <div class="slider-button"><i class="fa-solid fa-arrows-left-right text-sm"></i></div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-4xl mt-6 p-6 sm:p-8 rounded-2xl theme-card border border-orange-500/40 shadow-xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-crosshairs"></i> Location & Selection
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Latitude</td><td class="font-bold">47.5° N</td></tr>
+                            <tr><td class="text-slate-400">Longitude</td><td class="font-bold">90.0° E</td></tr>
+                            <tr><td class="text-slate-400">Area</td><td>Altai region, Mongolia–China border</td></tr>
+                        </table>
+
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-2">Why Selected?</h3>
+                        <ul class="space-y-1.5 cyber-subbox p-4 rounded-xl border text-sm text-slate-300">
+                            <li>• Highest slope-distribution similarity to Shackleton Crater.</li>
+                            <li>• Lowest Mean Absolute Error (MAE) of 2.692°.</li>
+                            <li>• Plutonic and sedimentary rock units present.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar"></i> Analysis Results
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Ranking</td><td class="text-emerald-500 dark:text-emerald-400 font-bold">1st out of 13 regions</td></tr>
+                            <tr><td class="text-slate-400">Coverage</td><td>100% (30,976 pixels)</td></tr>
+                            <tr><td class="text-slate-400">Imagery</td><td>Sentinel-2 L2A (Sept 14, 2026)</td></tr>
+                            <tr><td class="text-slate-400">Cloud Cover</td><td>0.0028%</td></tr>
+                        </table>
+
+                        <div class="p-3.5 rounded-xl bg-orange-500/10 border border-orange-500/40 text-sm text-orange-600 dark:text-orange-300">
+                            <strong class="font-orbitron text-[9px] block mb-1 uppercase">Assessment:</strong> 
+                            The strongest candidate among evaluated regions in slope-distribution similarity.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CANDIDATE AREA 2: Bering Strait -->
+        <div class="w-full flex flex-col items-center pt-8 border-t border-slate-700">
+            <div class="w-full max-w-4xl mb-4 flex items-center justify-between px-2">
+                <h2 class="font-orbitron text-sm sm:text-base text-orange-500 flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot"></i> Candidate Area 2: Bering Strait Region (Eastern Russia)
+                </h2>
+                <span class="text-xs font-orbitron px-3 py-1 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40">RANK: 2ND</span>
+            </div>
+
+            <div class="img-comparison-container" id="comparisonSliderMoon2">
+                <div class="absolute inset-0 img-back">
+                    <img src="Sheklton.jpeg" alt="Shackleton Crater Moon">
+                    <span class="absolute bottom-4 right-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-orange-500/50 font-orbitron text-[10px] text-orange-400">MOON: SHACKLETON CRATER</span>
+                </div>
+                <div class="img-front" id="frontImageWrapperMoon2">
+                    <img src="Bering.jpeg" alt="Earth Analog Bering Strait" id="frontImgElementMoon2">
+                    <span class="absolute bottom-4 left-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-sky-500/50 font-orbitron text-[10px] text-sky-400">EARTH ANALOG: BERING STRAIT</span>
+                </div>
+                <div class="slider-handle" id="sliderHandleMoon2" style="left: 50%;">
+                    <div class="slider-button"><i class="fa-solid fa-arrows-left-right text-sm"></i></div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-4xl mt-6 p-6 sm:p-8 rounded-2xl theme-card border border-orange-500/40 shadow-xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-crosshairs"></i> Location & Selection
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Latitude</td><td class="font-bold">64.5° N</td></tr>
+                            <tr><td class="text-slate-400">Longitude</td><td class="font-bold">173.5° W</td></tr>
+                            <tr><td class="text-slate-400">Area</td><td>Near Bering Strait, eastern Russia</td></tr>
+                        </table>
+
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-2">Why Selected?</h3>
+                        <ul class="space-y-1.5 cyber-subbox p-4 rounded-xl border text-sm text-slate-300">
+                            <li>• Second-highest slope-distribution similarity to Shackleton.</li>
+                            <li>• Recorded Mean Absolute Error (MAE) of 3.076°.</li>
+                            <li>• Volcanic and plutonic rock units indicated by GLiM.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar"></i> Analysis Results
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Ranking</td><td class="text-amber-500 dark:text-amber-400 font-bold">2nd out of 13 regions</td></tr>
+                            <tr><td class="text-slate-400">Coverage</td><td>100% (30,976 pixels)</td></tr>
+                            <tr><td class="text-slate-400">Imagery</td><td>Sentinel-2 L2A (June 17, 2024)</td></tr>
+                            <tr><td class="text-slate-400">Cloud Cover</td><td>0.9196%</td></tr>
+                        </table>
+
+                        <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-sm text-amber-600 dark:text-amber-300">
+                            <strong class="font-orbitron text-[9px] block mb-1 uppercase">Assessment:</strong> 
+                            Strong topographic candidate, but land coverage must be verified due to coastal proximity.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CANDIDATE AREA 3: Eastern South Korea -->
+        <div class="w-full flex flex-col items-center pt-8 border-t border-slate-700">
+            <div class="w-full max-w-4xl mb-4 flex items-center justify-between px-2">
+                <h2 class="font-orbitron text-sm sm:text-base text-orange-500 flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot"></i> Candidate Area 3: Eastern South Korea (East Coast)
+                </h2>
+                <span class="text-xs font-orbitron px-3 py-1 rounded bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/40">RANK: 3RD</span>
+            </div>
+
+            <div class="img-comparison-container" id="comparisonSliderMoon3">
+                <div class="absolute inset-0 img-back">
+                    <img src="Sheklton.jpeg" alt="Shackleton Crater Moon">
+                    <span class="absolute bottom-4 right-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-orange-500/50 font-orbitron text-[10px] text-orange-400">MOON: SHACKLETON CRATER</span>
+                </div>
+                <div class="img-front" id="frontImageWrapperMoon3">
+                    <img src="Eastern Korea.jpeg" alt="Earth Analog Eastern South Korea" id="frontImgElementMoon3">
+                    <span class="absolute bottom-4 left-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-sky-500/50 font-orbitron text-[10px] text-sky-400">EARTH ANALOG: EASTERN KOREA</span>
+                </div>
+                <div class="slider-handle" id="sliderHandleMoon3" style="left: 50%;">
+                    <div class="slider-button"><i class="fa-solid fa-arrows-left-right text-sm"></i></div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-4xl mt-6 p-6 sm:p-8 rounded-2xl theme-card border border-orange-500/40 shadow-xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-crosshairs"></i> Location & Selection
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Latitude</td><td class="font-bold">37.0° N</td></tr>
+                            <tr><td class="text-slate-400">Longitude</td><td class="font-bold">129.0° E</td></tr>
+                            <tr><td class="text-slate-400">Area</td><td>Eastern South Korea, near the east coast</td></tr>
+                        </table>
+
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-2">Why Selected?</h3>
+                        <ul class="space-y-1.5 cyber-subbox p-4 rounded-xl border text-sm text-slate-300">
+                            <li>• Achieved the third-highest slope-distribution similarity to Shackleton Crater.</li>
+                            <li>• Recorded a Mean Absolute Error (MAE) of 3.089°.</li>
+                            <li>• Plutonic and sedimentary rock units present.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar"></i> Analysis Results
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Ranking</td><td class="text-sky-500 dark:text-sky-400 font-bold">3rd out of 13 regions</td></tr>
+                            <tr><td class="text-slate-400">Coverage</td><td>100% (30,976 pixels)</td></tr>
+                            <tr><td class="text-slate-400">Imagery</td><td>Sentinel-2 L2A (April 13, 2026)</td></tr>
+                            <tr><td class="text-slate-400">Cloud Cover</td><td>0.3069%</td></tr>
+                        </table>
+
+                        <div class="p-3.5 rounded-xl bg-sky-500/10 border border-sky-500/40 text-sm text-sky-600 dark:text-sky-300">
+                            <strong class="font-orbitron text-[9px] block mb-1 uppercase">Assessment:</strong> 
+                            The third-strongest candidate based on slope-distribution similarity.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MARS CORRIDOR (3 Sites with Shared Jezero Crater Reference) -->
+    <div id="corridor-mars" class="w-full max-w-5xl flex flex-col items-center z-20 hidden space-y-12">
+        
+        <!-- SITE 1: Lake Salda – Turkey -->
+        <div class="w-full flex flex-col items-center">
+            <div class="w-full max-w-4xl mb-4 flex items-center justify-between px-2">
+                <h2 class="font-orbitron text-sm sm:text-base text-orange-500 flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot"></i> Candidate Area 1: Lake Salda – Turkey
+                </h2>
+                <span class="text-xs font-orbitron px-3 py-1 rounded bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/40">MINERALOGICAL ANALOG</span>
+            </div>
+
+            <div class="img-comparison-container" id="comparisonSliderMars1">
+                <div class="absolute inset-0 img-back">
+                    <img src="Jezero Crater.jpeg" alt="Mars Jezero Crater">
+                    <span class="absolute bottom-4 right-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-orange-500/50 font-orbitron text-[10px] text-orange-400">MARS: JEZERO CRATER</span>
+                </div>
+                <div class="img-front" id="frontImageWrapperMars1">
+                    <img src="Lake Salda.jpeg" alt="Lake Salda Turkey" id="frontImgElementMars1">
+                    <span class="absolute bottom-4 left-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-sky-500/50 font-orbitron text-[10px] text-sky-400">EARTH ANALOG: LAKE SALDA</span>
+                </div>
+                <div class="slider-handle" id="sliderHandleMars1" style="left: 50%;">
+                    <div class="slider-button"><i class="fa-solid fa-arrows-left-right text-sm"></i></div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-4xl mt-6 p-6 sm:p-8 rounded-2xl theme-card border border-orange-500/40 shadow-xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-crosshairs"></i> Analog Characteristics
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Environment Type</td><td class="font-bold">Alkaline lake &amp; carbonate deposits</td></tr>
+                            <tr><td class="text-slate-400">Key Minerals</td><td class="font-bold">Magnesium-rich (hydromagnesite)</td></tr>
+                            <tr><td class="text-slate-400">Features</td><td>Microbialites &amp; shoreline/deltaic deposits</td></tr>
+                        </table>
+
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-2">Why did we choose it?</h3>
+                        <p class="cyber-subbox p-4 rounded-xl border text-sm text-slate-300 leading-relaxed">
+                            Because scientists have already studied Lake Salda as a terrestrial analog for Jezero. Its carbonate sediments and microbialites can help researchers understand how similar deposits might have formed and been preserved on Mars. NASA has discussed this comparison, and a 2024 scientific study specifically describes Salda as an analog for Jezero's paleolake.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar"></i> Scientific Profile
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Primary Focus</td><td class="text-orange-500 dark:text-orange-400 font-bold">Mineralogical &amp; Geochemical</td></tr>
+                            <tr><td class="text-slate-400">Formation Type</td><td>Microbialite-formation analog</td></tr>
+                            <tr><td class="text-slate-400">Reference Benchmark</td><td>Jezero Crater Paleolake System</td></tr>
+                        </table>
+
+                        <div class="p-3.5 rounded-xl bg-orange-500/10 border border-orange-500/40 text-sm text-orange-600 dark:text-orange-300">
+                            <strong class="font-orbitron text-[9px] block mb-1 uppercase">Assessment:</strong> 
+                            Essential testbed for assessing carbonate preservation and astrobiological biosignature detection.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SITE 2: North Gobi Basin – China -->
+        <div class="w-full flex flex-col items-center pt-8 border-t border-slate-700">
+            <div class="w-full max-w-4xl mb-4 flex items-center justify-between px-2">
+                <h2 class="font-orbitron text-sm sm:text-base text-orange-500 flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot"></i> Candidate Area 2: North Gobi Basin – China
+                </h2>
+                <span class="text-xs font-orbitron px-3 py-1 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40">GEOMORPHOLOGICAL ANALOG</span>
+            </div>
+
+            <div class="img-comparison-container" id="comparisonSliderMars2">
+                <div class="absolute inset-0 img-back">
+                    <img src="Jezero Crater.jpeg" alt="Mars Jezero Crater">
+                    <span class="absolute bottom-4 right-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-orange-500/50 font-orbitron text-[10px] text-orange-400">MARS: JEZERO CRATER</span>
+                </div>
+                <div class="img-front" id="frontImageWrapperMars2">
+                    <img src="North Gobi Basin.jpeg" alt="North Gobi Basin China" id="frontImgElementMars2">
+                    <span class="absolute bottom-4 left-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-sky-500/50 font-orbitron text-[10px] text-sky-400">EARTH ANALOG: NORTH GOBI</span>
+                </div>
+                <div class="slider-handle" id="sliderHandleMars2" style="left: 50%;">
+                    <div class="slider-button"><i class="fa-solid fa-arrows-left-right text-sm"></i></div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-4xl mt-6 p-6 sm:p-8 rounded-2xl theme-card border border-orange-500/40 shadow-xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-crosshairs"></i> Analog Characteristics
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Environment Type</td><td class="font-bold">Dry, cold region with delta morphology</td></tr>
+                            <tr><td class="text-slate-400">Geomorphology</td><td class="font-bold">Ancient deltaic landforms &amp; lobate shapes</td></tr>
+                            <tr><td class="text-slate-400">Geology</td><td>Basaltic rocks in regional sections</td></tr>
+                        </table>
+
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-2">Why did we choose it?</h3>
+                        <p class="cyber-subbox p-4 rounded-xl border text-sm text-slate-300 leading-relaxed">
+                            Because researchers have proposed Gobi delta deposits as useful analogs for Martian lacustrine deltas. The dry environmental setting is also relevant to understanding how ancient water-related landforms survive after a region becomes arid.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar"></i> Scientific Profile
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Primary Focus</td><td class="text-amber-500 dark:text-amber-400 font-bold">Geomorphological &amp; Sedimentary</td></tr>
+                            <tr><td class="text-slate-400">Climate Setting</td><td>Arid, dusty, and cold seasonal conditions</td></tr>
+                            <tr><td class="text-slate-400">Reference Benchmark</td><td>Jezero Crater Delta System</td></tr>
+                        </table>
+
+                        <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-sm text-amber-600 dark:text-amber-300">
+                            <strong class="font-orbitron text-[9px] block mb-1 uppercase">Assessment:</strong> 
+                            Crucial for tracking how lobate delta structures degrade and persist under hyper-arid wind regimes.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SITE 3: Paleolake Tushka – Egypt -->
+        <div class="w-full flex flex-col items-center pt-8 border-t border-slate-700">
+            <div class="w-full max-w-4xl mb-4 flex items-center justify-between px-2">
+                <h2 class="font-orbitron text-sm sm:text-base text-orange-500 flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot"></i> Candidate Area 3: Paleolake Tushka – Egypt
+                </h2>
+                <span class="text-xs font-orbitron px-3 py-1 rounded bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/40">CLIMATE-TRANSITION ANALOG</span>
+            </div>
+
+            <div class="img-comparison-container" id="comparisonSliderMars3">
+                <div class="absolute inset-0 img-back">
+                    <img src="Jezero Crater.jpeg" alt="Mars Jezero Crater">
+                    <span class="absolute bottom-4 right-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-orange-500/50 font-orbitron text-[10px] text-orange-400">MARS: JEZERO CRATER</span>
+                </div>
+                <div class="img-front" id="frontImageWrapperMars3">
+                    <img src="Toshka.jpeg" alt="Paleolake Tushka Egypt" id="frontImgElementMars3">
+                    <span class="absolute bottom-4 left-4 bg-slate-950/80 px-3.5 py-1.5 rounded border border-sky-500/50 font-orbitron text-[10px] text-sky-400">EARTH ANALOG: PALEOLAKE TUSHKA</span>
+                </div>
+                <div class="slider-handle" id="sliderHandleMars3" style="left: 50%;">
+                    <div class="slider-button"><i class="fa-solid fa-arrows-left-right text-sm"></i></div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-4xl mt-6 p-6 sm:p-8 rounded-2xl theme-card border border-orange-500/40 shadow-xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-crosshairs"></i> Analog Characteristics
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Environment Type</td><td class="font-bold">Ancient lake margins &amp; fan deltas</td></tr>
+                            <tr><td class="text-slate-400">Key Features</td><td class="font-bold">Inverted fluvial channels (differential erosion)</td></tr>
+                            <tr><td class="text-slate-400">Climate Record</td><td>Transition from wet conditions to arid desert</td></tr>
+                        </table>
+
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-2">Why did we choose it?</h3>
+                        <p class="cyber-subbox p-4 rounded-xl border text-sm text-slate-300 leading-relaxed">
+                            A scientific study published in 2022 discusses the Tushka region's ancient lake, deltaic landforms and transition from wet to dry conditions as relevant comparisons for early Mars. Other research specifically proposes its inverted delta deposits as analogs for Jezero's fan-shaped deposits.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-orbitron text-xs text-orange-500 uppercase mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar"></i> Scientific Profile
+                        </h3>
+                        <table class="cyber-table cyber-subbox border text-base mb-4 rounded-xl">
+                            <tr><td class="text-slate-400">Primary Focus</td><td class="text-sky-500 dark:text-sky-400 font-bold">Geomorphological &amp; Wet-to-Dry Transition</td></tr>
+                            <tr><td class="text-slate-400">Erosional Dynamics</td><td>Inverted channel topography &amp; fan margins</td></tr>
+                            <tr><td class="text-slate-400">Reference Benchmark</td><td>Jezero Fan-Shaped Deposits</td></tr>
+                        </table>
+
+                        <div class="p-3.5 rounded-xl bg-sky-500/10 border border-sky-500/40 text-sm text-sky-600 dark:text-sky-300">
+                            <strong class="font-orbitron text-[9px] block mb-1 uppercase">Assessment:</strong> 
+                            Valuable for modeling how ancient river beds invert into elevated ridges over climatic shifts.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let audioCtx = null;
+        let isSoundEnabled = false;
+        let ambientOsc = null;
+        let ambientGain = null;
+
+        function toggleAudio() {
+            const icon = document.getElementById('sound-icon');
+            const text = document.getElementById('sound-text');
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            if (!isSoundEnabled) {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                ambientOsc = audioCtx.createOscillator();
+                ambientGain = audioCtx.createGain();
+                ambientOsc.type = 'sine';
+                ambientOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+                ambientGain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+                
+                ambientOsc.connect(ambientGain);
+                ambientGain.connect(audioCtx.destination);
+                ambientOsc.start();
+
+                isSoundEnabled = true;
+                icon.className = 'fa-solid fa-volume-high text-orange-400';
+                text.innerText = 'AUDIO ON';
+                playBeep(660, 0.08);
+            } else {
+                if (ambientOsc) {
+                    ambientOsc.stop();
+                    ambientOsc.disconnect();
+                    ambientOsc = null;
+                }
+                isSoundEnabled = false;
+                icon.className = 'fa-solid fa-volume-xmark';
+                text.innerText = 'AUDIO OFF';
+            }
+        }
+
+        function playBeep(freq = 520, duration = 0.06) {
+            if (!isSoundEnabled || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const stars = Array.from({ length: 180 }, () => ({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: Math.random() * 1.4 + 0.3,
+            alpha: Math.random(),
+            speed: Math.random() * 0.015 + 0.005
+        }));
+
+        function animateStars() {
+            ctx.clearRect(0, 0, width, height);
+            const isDark = document.documentElement.classList.contains('dark');
+            ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.85)' : 'rgba(15, 23, 42, 0.35)';
+
+            stars.forEach(star => {
+                star.alpha += star.speed;
+                if (star.alpha > 1 || star.alpha < 0.2) star.speed = -star.speed;
+                ctx.globalAlpha = star.alpha;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(animateStars);
+        }
+        animateStars();
+
+        function toggleTheme() {
+            playBeep(700, 0.05);
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                icon.className = 'fa-solid fa-sun';
+                text.innerText = 'LIGHT MODE';
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-moon';
+                text.innerText = 'DARK MODE';
+            }
+        }
+        
+        document.documentElement.classList.add('dark');
+
+        function setupSlider(containerId, frontWrapperId, sliderHandleId, frontImgId) {
+            const container = document.getElementById(containerId);
+            const frontWrapper = document.getElementById(frontWrapperId);
+            const sliderHandle = document.getElementById(sliderHandleId);
+            const frontImg = document.getElementById(frontImgId);
+
+            function updateWidth() {
+                if(container && container.offsetWidth > 0) {
+                    frontImg.style.width = container.offsetWidth + 'px';
+                }
+            }
+            window.addEventListener('resize', updateWidth);
+            window.addEventListener('load', updateWidth);
+            setTimeout(updateWidth, 150);
+
+            let isDragging = false;
+
+            function sliderMove(clientX) {
+                const rect = container.getBoundingClientRect();
+                let position = clientX - rect.left;
+                if (position < 0) position = 0;
+                if (position > rect.width) position = rect.width;
+
+                const percentage = (position / rect.width) * 100;
+                frontWrapper.style.width = percentage + '%';
+                sliderHandle.style.left = percentage + '%';
+            }
+
+            sliderHandle.addEventListener('mousedown', (e) => { isDragging = true; e.preventDefault(); playBeep(520, 0.04); });
+            window.addEventListener('mouseup', () => { isDragging = false; });
+            window.addEventListener('mousemove', (e) => { if (!isDragging) return; sliderMove(e.clientX); });
+
+            sliderHandle.addEventListener('touchstart', () => { isDragging = true; playBeep(520, 0.04); });
+            window.addEventListener('touchend', () => { isDragging = false; });
+            window.addEventListener('touchmove', (e) => { if (!isDragging) return; sliderMove(e.touches[0].clientX); });
+
+            container.addEventListener('click', (e) => { sliderMove(e.clientX); playBeep(580, 0.04); });
+        }
+
+        // Setup Moon Sliders
+        setupSlider('comparisonSliderMoon1', 'frontImageWrapperMoon1', 'sliderHandleMoon1', 'frontImgElementMoon1');
+        setupSlider('comparisonSliderMoon2', 'frontImageWrapperMoon2', 'sliderHandleMoon2', 'frontImgElementMoon2');
+        setupSlider('comparisonSliderMoon3', 'frontImageWrapperMoon3', 'sliderHandleMoon3', 'frontImgElementMoon3');
+
+        // Setup Mars Sliders
+        setupSlider('comparisonSliderMars1', 'frontImageWrapperMars1', 'sliderHandleMars1', 'frontImgElementMars1');
+        setupSlider('comparisonSliderMars2', 'frontImageWrapperMars2', 'sliderHandleMars2', 'frontImgElementMars2');
+        setupSlider('comparisonSliderMars3', 'frontImageWrapperMars3', 'sliderHandleMars3', 'frontImgElementMars3');
+
+        function switchCorridor(target) {
+            playBeep(750, 0.06);
+            const moonCorridor = document.getElementById('corridor-moon');
+            const marsCorridor = document.getElementById('corridor-mars');
+            const tabMoon = document.getElementById('tab-moon');
+            const tabMars = document.getElementById('tab-mars');
+
+            if (target === 'moon') {
+                moonCorridor.classList.remove('hidden');
+                marsCorridor.classList.add('hidden');
+                tabMoon.classList.add('active', 'border-orange-500', 'text-white');
+                tabMoon.classList.remove('border-slate-700', 'text-slate-300');
+                tabMars.classList.remove('active', 'border-orange-500', 'text-white');
+                tabMars.classList.add('border-slate-700', 'text-slate-300');
+            } else {
+                marsCorridor.classList.remove('hidden');
+                moonCorridor.classList.add('hidden');
+                tabMars.classList.add('active', 'border-orange-500', 'text-white');
+                tabMars.classList.remove('border-slate-700', 'text-slate-300');
+                tabMoon.classList.remove('active', 'border-orange-500', 'text-white');
+                tabMoon.classList.add('border-slate-700', 'text-slate-300');
+                window.dispatchEvent(new Event('resize'));
+            }
+        }
+    </script>
+</body>
+</html>

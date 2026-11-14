@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LUNARSE X — Mars Analog Finder</title>
+  <!-- Crisp Pixelated Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =========================================================
+       CSS CUSTOM PROPERTIES (DARK & LIGHT THEMES)
+       ========================================================= */
+    :root {
+      --font-display: 'Press Start 2P', monospace;
+      --font-ui: 'Silkscreen', monospace;
+
+      --bg-color: #060919;
+      --card-bg: rgba(13, 18, 43, 0.78);
+      --card-bg-elevated: rgba(20, 27, 61, 0.88);
+      --text-primary: #f4f6ff;
+      --text-secondary: #8c96bd;
+      --border-color: rgba(110, 128, 196, 0.25);
+      --border-glow: rgba(245, 162, 84, 0.75);
+      --accent-orange: #f59b4c;
+      --accent-orange-hover: #ffad63;
+      --accent-orange-text: #140d05;
+      --pill-bg: #ffffff;
+      --pill-text: #0b0f26;
+      --gauge-track: rgba(255, 255, 255, 0.1);
+      --btn-secondary-bg: rgba(28, 36, 74, 0.9);
+      --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+
+    [data-theme="light"] {
+      --bg-color: #eef2f9;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-bg-elevated: rgba(244, 247, 254, 0.95);
+      --text-primary: #101733;
+      --text-secondary: #525f85;
+      --border-color: rgba(35, 52, 105, 0.18);
+      --border-glow: #e8832a;
+      --accent-orange: #ea862f;
+      --accent-orange-hover: #d8741e;
+      --accent-orange-text: #ffffff;
+      --pill-bg: #101733;
+      --pill-text: #ffffff;
+      --gauge-track: rgba(16, 23, 51, 0.12);
+      --btn-secondary-bg: #dce3f2;
+      --shadow-card: 0 10px 28px rgba(24, 39, 75, 0.08);
+    }
+
+    /* =========================================================
+       RESET & BASE TYPOGRAPHY
+       ========================================================= */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-ui);
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background-color 0.35s ease, color 0.35s ease;
+      position: relative;
+    }
+
+    button {
+      font-family: var(--font-ui);
+      cursor: pointer;
+      border: none;
+      outline: none;
+    }
+
+    #starfield-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* =========================================================
+       TOP NAVIGATION BAR
+       ========================================================= */
+    .top-nav {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pixel-logo {
+      display: grid;
+      grid-template-columns: repeat(2, 6px);
+      gap: 2px;
+    }
+
+    .pixel-logo span {
+      width: 6px;
+      height: 6px;
+      background: var(--text-primary);
+      display: block;
+    }
+
+    .pixel-logo span:nth-child(2) {
+      background: var(--accent-orange);
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-tab {
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      padding: 6px 2px;
+      position: relative;
+      transition: color 0.2s ease;
+    }
+
+    .nav-tab:hover,
+    .nav-tab.active {
+      color: var(--text-primary);
+    }
+
+    .nav-tab.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -4px;
+      height: 2px;
+      background: var(--text-primary);
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .theme-btn {
+      background: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+
+    .theme-btn:hover {
+      border-color: var(--accent-orange);
+      transform: translateY(-1px);
+    }
+
+    .live-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #38e58c;
+      box-shadow: 0 0 8px #38e58c;
+      animation: pulseDot 1.8s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.85); }
+    }
+
+    /* =========================================================
+       3-COLUMN DASHBOARD GRID
+       ========================================================= */
+    .dashboard-grid {
+      position: relative;
+      z-index: 5;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 32px 40px;
+      display: grid;
+      grid-template-columns: 280px 1fr 290px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .sidebar-left,
+    .sidebar-right {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 18px;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-card);
+      transition: background-color 0.35s ease, border-color 0.35s ease;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .badge-outline {
+      font-size: 0.62rem;
+      padding: 3px 7px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+    }
+
+    /* =========================================================
+       LEFT SIDEBAR CARDS
+       ========================================================= */
+    .gravity-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+    }
+
+    .gravity-col {
+      flex: 1;
+    }
+
+    .gravity-divider {
+      width: 1px;
+      height: 44px;
+      background: var(--border-color);
+      margin: 0 12px;
+    }
+
+    .metric-big {
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      margin-bottom: 6px;
+    }
+
+    .metric-big .unit {
+      font-family: var(--font-ui);
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      margin-left: 3px;
+    }
+
+    .metric-sub {
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+    }
+
+    .ring-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 14px 0 20px;
+    }
+
+    .outer-dashed-ring {
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
+      border: 1px dashed var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-circle {
+      width: 98px;
+      height: 98px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffbe85, #e88446);
+      box-shadow: 0 0 24px rgba(245, 155, 76, 0.35);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+
+    .ring-percent {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+    }
+
+    .ring-label {
+      font-size: 0.6rem;
+      margin-top: 4px;
+      opacity: 0.9;
+    }
+
+    .kv-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .kv-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .kv-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .kv-key {
+      color: var(--text-secondary);
+    }
+
+    .kv-val {
+      font-weight: 700;
+    }
+
+    .wireframe-box {
+      height: 68px;
+      margin: 10px 0 14px;
+      color: var(--text-secondary);
+    }
+
+    .terrain-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill-white {
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      font-size: 0.62rem;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    /* =========================================================
+       CENTER MAIN STAGE (ANALOG FINDER MODE)
+       ========================================================= */
+    .center-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 8px;
+    }
+
+    .hero-header {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .step-pill {
+      display: inline-block;
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      line-height: 1.45;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+    }
+
+    .hero-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    .comparison-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+
+    .compare-card {
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 12px;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      backdrop-filter: blur(12px);
+    }
+
+    .compare-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .compare-card.selected {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 24px rgba(245, 155, 76, 0.25);
+    }
+
+    .illustration-full {
+      position: relative;
+      height: 120px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      background: #000;
+    }
+
+    .illustration-full img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .compare-card-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 4px;
+    }
+
+    .compare-info h3 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .compare-info p {
+      font-size: 0.62rem;
+      color: var(--text-secondary);
+      line-height: 1.35;
+    }
+
+    /* =========================================================
+       STEP PROGRESS BAR & PREV/NEXT BUTTONS BELOW
+       ========================================================= */
+    .stepper-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .stepper-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+    }
+
+    .step-item.active {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    .step-item.active .step-num {
+      border-color: var(--text-primary);
+      background: var(--pill-bg);
+      color: var(--pill-text);
+    }
+
+    .step-line {
+      flex: 1;
+      height: 1px;
+      border-top: 1px dashed var(--border-color);
+      margin: 0 8px;
+    }
+
+    .stepper-nav-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .nav-action-btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      transition: transform 0.15s ease, background-color 0.2s ease, opacity 0.2s ease;
+    }
+
+    .nav-action-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    .btn-prev {
+      background: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-next {
+      background: var(--accent-orange);
+      color: var(--accent-orange-text);
+      box-shadow: 0 4px 16px rgba(245, 155, 76, 0.35);
+    }
+
+    .btn-next:hover:not(:disabled) {
+      background: var(--accent-orange-hover);
+    }
+
+    /* =========================================================
+       RIGHT SIDEBAR CARDS
+       ========================================================= */
+    .view-toggle-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .view-pill {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+    }
+
+    .view-pill.active {
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      font-weight: 700;
+    }
+
+    .planet-stats-block {
+      margin-bottom: 18px;
+    }
+
+    .planet-stats-block:last-child {
+      margin-bottom: 0;
+    }
+
+    .stat-header-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .stat-bar-track {
+      width: 100%;
+      height: 4px;
+      background: var(--gauge-track);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .stat-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .earth-fill {
+      background: linear-gradient(90deg, #4b8df8, var(--accent-orange));
+    }
+
+    .target-fill {
+      background: linear-gradient(90deg, #f58c62, #e85d44);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-k {
+      color: var(--text-secondary);
+    }
+
+    .stat-v {
+      font-weight: 700;
+    }
+
+    @media (max-width: 1180px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      .sidebar-left,
+      .sidebar-right {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+      .comparison-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Full-Screen Glowing Twinkling Canvas Background -->
+  <canvas id="starfield-canvas" aria-hidden="true"></canvas>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <div class="brand">
+      <div class="pixel-logo" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <span class="brand-name">LUNARSE X</span>
+    </div>
+
+    <nav class="nav-tabs" aria-label="Mission Phases">
+      <button class="nav-tab" data-step="1">Setup</button>
+      <button class="nav-tab active" data-step="2">Analog Finder</button>
+      <button class="nav-tab" data-step="3">Details</button>
+      <button class="nav-tab" data-step="4">Analysis</button>
+      <button class="nav-tab" data-step="5">Reports</button>
+    </nav>
+
+    <div class="nav-controls">
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle Dark and Light Mode">
+        <span id="theme-icon">☀</span> <span id="theme-label">LIGHT</span>
+      </button>
+      <div class="live-status">
+        <span>UPD: live</span>
+        <span class="live-dot"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main 3-Column Dashboard Grid -->
+  <main class="dashboard-grid">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar-left">
+      <!-- 1. Gravity Comparison Card -->
+      <section class="card gravity-card">
+        <div class="gravity-col">
+          <div class="metric-big">9.81<span class="unit">m/s²</span></div>
+          <div class="metric-sub">Earth gravity</div>
+        </div>
+        <div class="gravity-divider"></div>
+        <div class="gravity-col">
+          <div class="metric-big" id="left-target-gravity">3.72<span class="unit">m/s²</span></div>
+          <div class="metric-sub" id="left-target-label">Mars gravity</div>
+        </div>
+      </section>
+
+      <!-- 2. Mission Status Card -->
+      <section class="card mission-card">
+        <div class="card-header">
+          <h2 class="card-title">Mission status</h2>
+          <span class="badge-outline">ANALOG</span>
+        </div>
+
+        <div class="ring-wrapper">
+          <div class="outer-dashed-ring">
+            <div class="progress-circle">
+              <span class="ring-percent">40%</span>
+              <span class="ring-label">complete</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kv-list">
+          <div class="kv-row">
+            <span class="kv-key">Phase</span>
+            <span class="kv-val">Analog Finder</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-key">Site</span>
+            <span class="kv-val" id="status-mission-name">Atacama Desert</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-key">Status</span>
+            <span class="kv-val" id="status-testbed">Active Testbed</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. 3D Projection Card -->
+      <section class="card projection-card">
+        <div class="card-header">
+          <h2 class="card-title">3D Projection</h2>
+          <span class="badge-outline">REFERENCE</span>
+        </div>
+
+        <div class="wireframe-box">
+          <svg viewBox="0 0 260 65" class="terrain-svg" preserveAspectRatio="none">
+            <path d="M0,45 Q35,20 70,42 T140,35 T210,48 T260,30" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+            <path d="M0,38 Q45,55 85,30 T165,45 T230,25 T260,40" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+            <path d="M0,52 Q50,28 100,48 T180,28 T260,46" fill="none" stroke="var(--accent-orange)" stroke-width="1.5" opacity="0.85"/>
+            <path d="M0,26 Q60,46 120,24 T200,42 T260,22" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+          </svg>
+        </div>
+
+        <div class="pill-group">
+          <span class="pill-white">Arid Soil</span>
+          <span class="pill-white">Sulfates</span>
+          <span class="pill-white">Basalt</span>
+        </div>
+      </section>
+    </aside>
+
+    <!-- CENTER MAIN STAGE (ANALOG SITES) -->
+    <section class="center-stage">
+      <div class="hero-header">
+        <div class="step-pill">Step 02 · Mars Analog Finder</div>
+        <h1 class="hero-title">SELECT MARS ANALOG SITE</h1>
+        <p class="hero-subtitle">Choose a terrestrial analog site matching Martian geological and atmospheric conditions for rover testing.</p>
+      </div>
+
+      <!-- Interactive Analog Cards -->
+      <div class="comparison-cards">
+        <!-- Card 1: Atacama Desert -->
+        <article class="compare-card selected" data-index="0" tabindex="0">
+          <div class="illustration-full">
+            <img src="mars.jpeg" alt="Atacama Desert Analog" onerror="this.src='https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=600&q=80'" />
+          </div>
+          <div class="compare-card-footer">
+            <div class="compare-info">
+              <h3>Atacama Desert</h3>
+              <p>Chilean hyper-arid core & perchlorate soils</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 2: Mojave Desert -->
+        <article class="compare-card" data-index="1" tabindex="0">
+          <div class="illustration-full">
+            <img src="Mars(2).jpeg" alt="Mojave Desert Analog" onerror="this.src='https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?auto=format&fit=crop&w=600&q=80'" />
+          </div>
+          <div class="compare-card-footer">
+            <div class="compare-info">
+              <h3>Mojave Desert</h3>
+              <p>California alluvial fans & basaltic flows</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 3: Devon Island -->
+        <article class="compare-card" data-index="2" tabindex="0">
+          <div class="illustration-full">
+            <img src="marsrover.jpeg" alt="Devon Island Analog" onerror="this.src='https://images.unsplash.com/photo-1522030299830-16b8d3d049fe?auto=format&fit=crop&w=600&q=80'" />
+          </div>
+          <div class="compare-card-footer">
+            <div class="compare-info">
+              <h3>Devon Island</h3>
+              <p>High Arctic impact crater & permafrost</p>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Step Progress Bar & Navigation Controls -->
+      <div class="stepper-container">
+        <div class="card stepper-bar">
+          <div class="step-item" data-step="1">
+            <span class="step-num">1</span>
+            <span class="step-name">Setup</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item active" data-step="2">
+            <span class="step-num">2</span>
+            <span class="step-name">Analog Finder</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item" data-step="3">
+            <span class="step-num">3</span>
+            <span class="step-name">Details</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item" data-step="4">
+            <span class="step-num">4</span>
+            <span class="step-name">Analysis</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item" data-step="5">
+            <span class="step-num">5</span>
+            <span class="step-name">Reports</span>
+          </div>
+        </div>
+
+        <div class="stepper-nav-buttons">
+          <button id="btn-prev" class="nav-action-btn btn-prev">&lt; Prev</button>
+          <button id="btn-next" class="nav-action-btn btn-next">Next &gt;</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="sidebar-right">
+      <section class="card view-card">
+        <div class="card-header">
+          <h2 class="card-title">View</h2>
+          <span class="badge-outline">REFERENCE</span>
+        </div>
+
+        <div class="view-toggle-pills">
+          <button class="view-pill active" data-view="structure">Structure</button>
+          <button class="view-pill" data-view="composition">Composition</button>
+        </div>
+
+        <!-- Mars Target Section -->
+        <div class="planet-stats-block">
+          <div class="stat-header-row">
+            <span class="stat-planet-name">Mars Target</span>
+            <span class="stat-planet-val">3.72 m/s²</span>
+          </div>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill earth-fill" style="width: 100%;"></div>
+          </div>
+
+          <div class="stat-row">
+            <span class="stat-k">Temp</span>
+            <span class="stat-v">-60 °C avg</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-k">Pressure</span>
+            <span class="stat-v">0.65 kPa</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-k">UV Index</span>
+            <span class="stat-v">Extreme</span>
+          </div>
+        </div>
+
+        <!-- Terrestrial Analog Section -->
+        <div class="planet-stats-block">
+          <div class="stat-header-row">
+            <span class="stat-planet-name" id="analog-title">Atacama Desert</span>
+            <span class="stat-planet-val" id="target-val-1">9.81 m/s²</span>
+          </div>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill target-fill" style="width: 85%;"></div>
+          </div>
+
+          <div class="stat-row">
+            <span class="stat-k" id="target-key-2">Humidity</span>
+            <span class="stat-v" id="target-val-2">&lt; 15% avg</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-k" id="target-key-3">Soil Salinity</span>
+            <span class="stat-v" id="target-val-3">High Sulfates</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-k" id="target-key-4">UV Stress</span>
+            <span class="stat-v" id="target-val-4">Very High</span>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      /* Starfield Generator */
+      const canvas = document.getElementById('starfield-canvas');
+      const ctx = canvas.getContext('2d');
+      let stars = [];
+      let currentTheme = 'dark';
+
+      const starColorsDark = ['#ffffff', '#ffe4b5', '#9ec5ff', '#f59b4c'];
+      const starColorsLight = ['#e69d35', '#3b82f6', '#7c6cf0', '#f59e0b'];
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        createStars();
+      }
+
+      function createStars() {
+        const count = Math.floor((canvas.width * canvas.height) / 7000);
+        const palette = currentTheme === 'dark' ? starColorsDark : starColorsLight;
+
+        stars = Array.from({ length: count }, () => ({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 2.5 + 0.8,
+          baseAlpha: Math.random() * 0.7 + 0.25,
+          twinkleSpeed: Math.random() * 0.045 + 0.012,
+          phase: Math.random() * Math.PI * 2,
+          driftY: (Math.random() - 0.5) * 0.15,
+          color: palette[Math.floor(Math.random() * palette.length)],
+          isCrossSparkle: Math.random() > 0.72
+        }));
+      }
+
+      function animateStars() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        stars.forEach((s) => {
+          s.phase += s.twinkleSpeed;
+          s.y += s.driftY;
+          if (s.y < 0) s.y = canvas.height;
+          if (s.y > canvas.height) s.y = 0;
+
+          const alpha = Math.max(0.1, Math.min(1, s.baseAlpha + Math.sin(s.phase) * 0.48));
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = s.color;
+          ctx.shadowBlur = currentTheme === 'dark' ? 12 : 8;
+          ctx.shadowColor = s.color;
+
+          const pxSize = Math.round(s.size * 1.5);
+          ctx.fillRect(Math.round(s.x), Math.round(s.y), pxSize, pxSize);
+          ctx.restore();
+        });
+        requestAnimationFrame(animateStars);
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+      animateStars();
+
+      /* Theme Toggle */
+      const themeToggleBtn = document.getElementById('theme-toggle');
+      const themeIcon = document.getElementById('theme-icon');
+      const themeLabel = document.getElementById('theme-label');
+
+      themeToggleBtn.addEventListener('click', () => {
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        if (currentTheme === 'light') {
+          themeIcon.textContent = '☾';
+          themeLabel.textContent = 'DARK';
+        } else {
+          themeIcon.textContent = '☀';
+          themeLabel.textContent = 'LIGHT';
+        }
+        createStars();
+      });
+
+      /* Analog Sites Data & Interaction */
+      const analogsData = [
+        {
+          name: "Atacama Desert",
+          subtitle: "Chilean hyper-arid core",
+          humidity: "< 15% avg",
+          salinity: "High Sulfates",
+          uv: "Very High",
+          comp: [
+            { k: "Quartz", v: "65.4%" },
+            { k: "Feldspar", v: "22.1%" },
+            { k: "Anhydrite", v: "8.5%" }
+          ]
+        },
+        {
+          name: "Mojave Desert",
+          subtitle: "California alluvial fans",
+          humidity: "20-30% avg",
+          salinity: "Moderate",
+          uv: "High",
+          comp: [
+            { k: "Basalt", v: "58.0%" },
+            { k: "Clay", v: "19.5% Smectite" },
+            { k: "Iron Oxides", v: "11.2%" }
+          ]
+        },
+        {
+          name: "Devon Island",
+          subtitle: "High Arctic impact crater",
+          humidity: "45-60% avg",
+          salinity: "Low Salt",
+          uv: "Moderate",
+          comp: [
+            { k: "Dolomite", v: "51.2%" },
+            { k: "Silicate", v: "30.4%" },
+            { k: "Permafrost", v: "18.4% Ice" }
+          ]
+        }
+      ];
+
+      let selectedAnalogIdx = 0;
+      let selectedView = 'structure';
+
+      const missionCards = document.querySelectorAll('.compare-card');
+      const viewPills = document.querySelectorAll('.view-pill');
+
+      function updateUI() {
+        const a = analogsData[selectedAnalogIdx];
+        document.getElementById('status-mission-name').textContent = a.name;
+        document.getElementById('analog-title').textContent = a.name;
+
+        if (selectedView === 'structure') {
+          document.getElementById('target-key-2').textContent = 'Humidity';
+          document.getElementById('target-val-2').textContent = a.humidity;
+          document.getElementById('target-key-3').textContent = 'Soil Salinity';
+          document.getElementById('target-val-3').textContent = a.salinity;
+          document.getElementById('target-key-4').textContent = 'UV Stress';
+          document.getElementById('target-val-4').textContent = a.uv;
+        } else {
+          a.comp.forEach((c, idx) => {
+            document.getElementById(`target-key-${idx + 2}`).textContent = c.k;
+            document.getElementById(`target-val-${idx + 2}`).textContent = c.v;
+          });
+        }
+      }
+
+      missionCards.forEach((card) => {
+        card.addEventListener('click', () => {
+          missionCards.forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectedAnalogIdx = parseInt(card.dataset.index);
+          updateUI();
+        });
+      });
+
+      viewPills.forEach((pill) => {
+        pill.addEventListener('click', () => {
+          viewPills.forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          selectedView = pill.dataset.view;
+          updateUI();
+        });
+      });
+
+      /* Navigation */
+      document.getElementById('btn-prev').addEventListener('click', () => {
+        window.location.href = 'main3.html';
+      });
+
+      document.getElementById('btn-next').addEventListener('click', () => {
+        window.location.href = 'main4.html';
+      });
+
+      updateUI();
+    });
+  </script>
+</body>
+</html>
