@@ -10,9 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
   <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- CesiumJS CSS & Script -->
-  <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
+  <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.125/Build/Cesium/Widgets/widgets.css">
+  <script defer src="https://cesium.com/downloads/cesiumjs/releases/1.125/Build/Cesium/Cesium.js"></script>
 
   <style>
     /* =========================================================
@@ -432,7 +431,6 @@
 
     .domain-toggle-bar {
       display: flex;
-      justify-content: center;
       gap: 10px;
       margin-bottom: 16px;
     }
@@ -469,52 +467,34 @@
       line-height: 1.5;
     }
 
-    /* Upper 2-Column Cesium Map + Selected Site Grid */
+    /* Upper 2-Column Map + Selected Site Grid */
     .analysis-top-grid {
       display: grid;
-      grid-template-columns: 1.25fr 1fr;
+      grid-template-columns: 1.15fr 1fr;
       gap: 16px;
       width: 100%;
       margin-bottom: 16px;
     }
 
-    /* Cesium Map Card */
+    /* Map Card */
     .map-card {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 310px;
+      min-height: 256px;
     }
 
     .map-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
-    .map-body-tabs {
-      display: flex;
-      gap: 6px;
-    }
-
-    .map-body-btn {
+    .map-label {
       font-size: 0.65rem;
-      padding: 5px 11px;
-      border-radius: 6px;
-      background: var(--btn-secondary-bg);
       color: var(--text-secondary);
-      border: 1px solid var(--border-color);
-      font-weight: 700;
-      transition: all 0.2s ease;
-    }
-
-    .map-body-btn.active {
-      background: var(--accent-orange);
-      color: var(--accent-orange-text);
-      border-color: var(--accent-orange);
+      letter-spacing: 0.6px;
     }
 
     .map-toggle-group {
@@ -541,33 +521,28 @@
 
     .map-viewport {
       position: relative;
-      flex: 1;
-      width: 100%;
-      min-height: 225px;
-      border-radius: 10px;
+      flex: none;
+      height: 190px;
+      margin: 6px 0;
       overflow: hidden;
-      border: 1px solid var(--border-color);
-      background: #03050c;
-      margin-bottom: 10px;
+      border-radius: 6px;
     }
 
-    #cesiumContainer {
-      width: 100%;
-      height: 100%;
+    .cesium-map {
       position: absolute;
       inset: 0;
+      width: 100%;
+      height: 100%;
+      visibility: hidden;
+      pointer-events: none;
     }
 
-    /* Clean Cesium UI overrides */
-    .cesium-viewer-bottom,
-    .cesium-viewer-toolbar,
-    .cesium-viewer-animationContainer,
-    .cesium-viewer-timelineContainer,
-    .cesium-viewer-fullscreenContainer {
-      display: none !important;
+    .cesium-map.active {
+      visibility: visible;
+      pointer-events: auto;
     }
 
-    .map-footer-row {
+    .map-footer-controls {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -576,17 +551,12 @@
 
     .map-footer-tag {
       display: inline-block;
+      align-self: flex-start;
       font-size: 0.6rem;
       padding: 4px 8px;
       border: 1px solid var(--border-color);
       border-radius: 4px;
       color: var(--text-secondary);
-    }
-
-    .map-coords-readout {
-      font-size: 0.6rem;
-      color: var(--accent-orange);
-      font-weight: 700;
     }
 
     /* Selected Site Details Card */
@@ -903,9 +873,117 @@
         grid-template-columns: 1fr;
       }
     }
+    body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+}
+
+/* شريط التبويبات العلوي */
+.tabs-header {
+    display: flex;
+    background-color: #1e1e1e;
+    border-bottom: 2px solid #333;
+    height: 50px;
+}
+
+.tab-btn {
+    flex: 1;
+    background-color: #1e1e1e;
+    color: #b0b0b0;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.tab-btn.active {
+    background-color: #2c2c2c;
+    color: #00bcd4;
+    border-bottom: 4px solid #00bcd4;
+}
+
+.tab-btn:hover {
+    background-color: #252525;
+    color: #ffffff;
+}
+
+/* حاويات الخرائط */
+.tab-content {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 50px);
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.cesium-container {
+    width: 100%;
+    height: 100%;
+}
+
+/* لوحة التحكم الجانبية للمواقع التناظرية (A, B, C) */
+.control-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(28, 28, 28, 0.85);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    width: 280px;
+    backdrop-filter: blur(5px);
+}
+
+.control-panel h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #00bcd4;
+    border-bottom: 1px solid #444;
+    padding-bottom: 8px;
+}
+
+.analog-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #00bcd4;
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: right;
+    transition: background 0.2s;
+}
+
+.analog-btn:hover {
+    background-color: #0097a7;
+    color: #fff;
+}
+
+.cesium-viewer-bottom {
+    right: 6px;
+    bottom: 4px;
+    left: auto;
+    font-size: 10px;
+}
   </style>
 </head>
 <body>
+  
   <!-- Full-Screen Glowing Twinkling Canvas Background -->
   <canvas id="starfield-canvas" aria-hidden="true"></canvas>
 
@@ -919,11 +997,11 @@
     </div>
 
     <nav class="nav-tabs" aria-label="Mission Phases">
-      <button class="nav-tab" data-step="1" onclick="handlePhaseNav(1, this)">Setup</button>
-      <button class="nav-tab" data-step="2" onclick="handlePhaseNav(2, this)">Analog Finder</button>
-      <button class="nav-tab" data-step="3" onclick="handlePhaseNav(3, this)">Details</button>
-      <button class="nav-tab active" data-step="4" onclick="handlePhaseNav(4, this)">Analysis</button>
-      <button class="nav-tab" data-step="5" onclick="handlePhaseNav(5, this)">Reports</button>
+      <button class="nav-tab" data-step="1" onclick="navigateTo(1)">Setup</button>
+      <button class="nav-tab" data-step="2" onclick="navigateTo(2)">Analog Finder</button>
+      <button class="nav-tab" data-step="3" onclick="navigateTo(3)">Details</button>
+      <button class="nav-tab active" data-step="4" onclick="navigateTo(4)">Analysis</button>
+      <button class="nav-tab" data-step="5" onclick="navigateTo(5)">Reports</button>
     </nav>
 
     <div class="nav-controls">
@@ -1022,36 +1100,33 @@
         <div class="step-pill" id="step-pill-label">Step 04 · Analysis</div>
         
         <!-- Domain Toggle Bar -->
-        <div class="domain-toggle-bar">
-          <button class="domain-btn active" id="btn-mode-moon" onclick="switchAnalysisMode('moon')">MOON EXPLORATION</button>
-          <button class="domain-btn" id="btn-mode-mars" onclick="switchAnalysisMode('mars')">MARS EXPLORATION</button>
-        </div>
-
         <h1 class="hero-title" id="hero-title-text">EARTH / MOON ANALOGS</h1>
-        <p class="hero-subtitle" id="hero-subtitle-text">Top 3 Earth analog locations and Lunar equivalents for Moon Exploration.</p>
+        <p class="hero-subtitle" id="hero-subtitle-text">Top 3 Earth analog locations for Moon Exploration Mission.</p>
       </div>
 
-      <!-- Upper 2-Column Cesium Map + Selected Site Grid -->
+      <!-- Upper 2-Column Map + Selected Site Grid -->
       <div class="analysis-top-grid">
-        <!-- Cesium 3D/2D Interactive Globe Card -->
+        <!-- CesiumJS map -->
         <div class="card map-card">
           <div class="map-header">
-            <div class="map-body-tabs" id="map-tabs-container">
-              <!-- Dynamically rendered depending on Moon vs Mars mode (Strict separation: Mars mode never shows Moon, Moon mode never shows Mars) -->
-            </div>
-            <div class="map-toggle-group">
-              <button class="map-mode-btn active" id="btn-view-3d" onclick="setCesiumSceneMode('3D')">3D</button>
-              <button class="map-mode-btn" id="btn-view-2d" onclick="setCesiumSceneMode('2D')">2D</button>
+            <span class="map-label">EARTH / MOON MAP · CESIUMJS</span>
+            <div class="map-toggle-group" aria-label="Select map view">
+              <button class="map-mode-btn active" data-map="3d" type="button">3D</button>
+              <button class="map-mode-btn" data-map="2d" type="button">2D</button>
             </div>
           </div>
 
           <div class="map-viewport">
-            <div id="cesiumContainer"></div>
+            <div id="cesium-map" class="cesium-map active" role="application" aria-label="Interactive map of Earth analog sites"></div>
+            <div id="cesium-moon-map" class="cesium-map" role="application" aria-label="Interactive map of the Moon"></div>
           </div>
 
-          <div class="map-footer-row">
-            <span class="map-footer-tag" id="cesium-ellipsoid-tag">WGS84 ELLIPSOID · CESIUM</span>
-            <span class="map-coords-readout" id="cesium-active-coords">26.00° N, 33.00° E · ELEV 450m</span>
+          <div class="map-footer-controls">
+            <span class="map-footer-tag">DRAG TO ROTATE · SCROLL TO ZOOM</span>
+            <div class="map-toggle-group" aria-label="Select map body">
+              <button class="map-mode-btn active" data-body="earth" type="button">Earth</button>
+              <button class="map-mode-btn" data-body="moon" type="button">Moon</button>
+            </div>
           </div>
         </div>
 
@@ -1062,7 +1137,7 @@
               <div class="rank-badge-inner" id="selected-rank-num">01</div>
             </div>
             <div class="site-title-meta">
-              <span class="site-eyebrow" id="selected-site-eyebrow">SELECTED EARTH ANALOG</span>
+              <span class="site-eyebrow">SELECTED SITE</span>
               <h2 class="site-name-heading" id="selected-site-name">Eastern Desert,<br/>Egypt</h2>
             </div>
           </div>
@@ -1081,8 +1156,8 @@
               <span class="site-detail-v" id="selected-reason">Dry weathering and rocky regolith-like surfaces</span>
             </div>
             <div class="site-detail-row">
-              <span class="site-detail-k">Coordinates & Elev</span>
-              <span class="site-detail-v" id="selected-coords">26.00° N, 33.00° E · 450 m</span>
+              <span class="site-detail-k">Coordinates</span>
+              <span class="site-detail-v" id="selected-coords">26°, 33°</span>
             </div>
             <div class="coord-progress-track">
               <div class="coord-progress-fill" id="selected-progress-bar" style="width: 94.8%;"></div>
@@ -1098,11 +1173,11 @@
 
       <!-- Footer Tag & Navigation Controls -->
       <div class="center-footer-bar">
-        <span class="sample-data-badge" id="footer-telemetry-status">CESIUM LIVE TELEMETRY · WGS84</span>
+        <span class="sample-data-badge">SAMPLE DATA · NOT ARCGIS OUTPUT</span>
         <div class="footer-btn-group">
-          <button id="btn-prev" class="nav-step-btn" onclick="playClickSound(); window.location.href='main4.html'">&lt; Prev</button>
+          <button id="btn-prev" class="nav-step-btn" onclick="navigateTo(3)">&lt; Prev</button>
           <button id="btn-rerun" class="rerun-btn">↻ Re-run</button>
-          <button id="btn-next" class="nav-step-btn" onclick="playClickSound(); window.location.href='main7.html'">Next &gt;</button>
+          <button id="btn-next" class="nav-step-btn" onclick="navigateTo(5)">Next &gt;</button>
         </div>
       </div>
     </section>
@@ -1142,559 +1217,207 @@
   </main>
 
   <script>
-    /* =========================================================================
-       1. CESIUM DATASETS (EARTH ANALOGS, LUNAR EQUIVALENTS, MARS ANALOGS)
-       ========================================================================= */
-    const cesiumDatasets = {
-      EARTH: {
-        bodyName: "Earth",
-        ellipsoid: Cesium.Ellipsoid.WGS84,
-        sites: [
+    /* ==========================================
+       DATASETS FOR MOON & MARS ANALYSIS
+       ========================================== */
+    const analysisData = {
+      moon: {
+        title: "EARTH / MOON ANALOGS",
+        subtitle: "Top 3 Earth analog locations for Moon Exploration Mission.",
+        gravity: "1.62 m/s²",
+        gravityLabel: "Moon gravity",
+        missionType: "Moon Exploration",
+        pills: ["Basalt", "Hematite", "Perchlorate"],
+        analogs: [
           {
-            id: "earth-0",
             rank: "01",
             shortName: "Eastern Desert",
             fullName: "Eastern Desert, Egypt",
             titleHtml: "Eastern Desert,<br/>Egypt",
-            lat: 26.0,
-            lon: 33.0,
-            elevation: 450,
-            camera: { lon: 33.0, lat: 26.0, height: 1800000, headingDeg: 0, pitchDeg: -55, rollDeg: 0 },
-            regionSemiMajor: 120000,
-            regionSemiMinor: 90000,
-            color: "#ff7b54",
             similarity: 94.8,
             terrain: "Hyper-arid, fractured granite & alluvial outwash",
             reason: "Dry weathering and rocky regolith-like surfaces",
-            coordsText: "26.00° N, 33.00° E · 450 m"
+            coords: "26°, 33°",
+            latitude: 26,
+            longitude: 33,
+            minerals: ["Basalt", "Hematite", "Perchlorate"]
           },
           {
-            id: "earth-1",
             rank: "02",
             shortName: "Mauna Kea",
             fullName: "Mauna Kea, Hawaii",
             titleHtml: "Mauna Kea,<br/>Hawaii",
-            lat: 19.8207,
-            lon: -155.4681,
-            elevation: 4207,
-            camera: { lon: -155.4681, lat: 19.8207, height: 1800000, headingDeg: 15, pitchDeg: -50, rollDeg: 0 },
-            regionSemiMajor: 100000,
-            regionSemiMinor: 80000,
-            color: "#f59b4c",
             similarity: 89.2,
             terrain: "Basaltic scoria, cinder cones, high UV",
             reason: "Volcanic tephra & iron-rich basaltic regolith",
-            coordsText: "19.82° N, 155.47° W · 4,207 m"
+            coords: "19.8°, -155.5°",
+            latitude: 19.8,
+            longitude: -155.5,
+            minerals: ["Olivine", "Plagioclase", "Basalt"]
           },
           {
-            id: "earth-2",
             rank: "03",
             shortName: "Atacama Desert",
             fullName: "Atacama Desert, Chile",
             titleHtml: "Atacama Desert,<br/>Chile",
-            lat: -24.5,
-            lon: -69.25,
-            elevation: 2400,
-            camera: { lon: -69.25, lat: -24.5, height: 1800000, headingDeg: -10, pitchDeg: -55, rollDeg: 0 },
-            regionSemiMajor: 120000,
-            regionSemiMinor: 95000,
-            color: "#4cc9f0",
             similarity: 82.5,
             terrain: "Salt pan crust, near-zero moisture",
             reason: "Hyper-arid sulfate & perchlorate soil chemistry",
-            coordsText: "24.50° S, 69.25° W · 2,400 m"
+            coords: "-24.5°, -69.2°",
+            latitude: -24.5,
+            longitude: -69.2,
+            minerals: ["Anhydrite", "Perchlorate", "Quartz"]
           }
         ]
-      },
-      MOON: {
-        bodyName: "Moon",
-        ellipsoid: Cesium.Ellipsoid.MOON,
-        sites: [
-          {
-            id: "moon-0",
-            rank: "01",
-            shortName: "Eastern Highlands",
-            fullName: "Eastern Highlands (Mare Smythii Rim)",
-            titleHtml: "Eastern Highlands,<br/>Lunar Rim",
-            lat: 1.5,
-            lon: 87.0,
-            elevation: 1850,
-            camera: { lon: 87.0, lat: 1.5, height: 1700000, headingDeg: 0, pitchDeg: -60, rollDeg: 0 },
-            regionSemiMajor: 110000,
-            regionSemiMinor: 85000,
-            color: "#ff7b54",
-            similarity: 94.8,
-            terrain: "Anorthositic cratered highlands & ejecta blankets",
-            reason: "Direct structural equivalent to Eastern Desert fractured basement",
-            coordsText: "1.50° N, 87.00° E · +1,850 m"
-          },
-          {
-            id: "moon-1",
-            rank: "02",
-            shortName: "Oceanus Procellarum",
-            fullName: "Oceanus Procellarum (Marius Hills)",
-            titleHtml: "Oceanus Procellarum,<br/>Marius Hills",
-            lat: 14.0,
-            lon: -56.0,
-            elevation: -1200,
-            camera: { lon: -56.0, lat: 14.0, height: 1700000, headingDeg: 12, pitchDeg: -58, rollDeg: 0 },
-            regionSemiMajor: 130000,
-            regionSemiMinor: 95000,
-            color: "#f59b4c",
-            similarity: 89.2,
-            terrain: "Mare basaltic flood plains, volcanic domes & rilles",
-            reason: "High-Ti basaltic lava domes matching Mauna Kea tephra",
-            coordsText: "14.00° N, 56.00° W · -1,200 m"
-          },
-          {
-            id: "moon-2",
-            rank: "03",
-            shortName: "South Pole-Aitken",
-            fullName: "South Pole-Aitken Basin (Shackleton Rim)",
-            titleHtml: "South Pole-Aitken,<br/>Shackleton Rim",
-            lat: -89.5,
-            lon: 0.0,
-            elevation: -4200,
-            camera: { lon: 0.0, lat: -89.5, height: 1700000, headingDeg: 0, pitchDeg: -65, rollDeg: 0 },
-            regionSemiMajor: 120000,
-            regionSemiMinor: 120000,
-            color: "#4cc9f0",
-            similarity: 82.5,
-            terrain: "Deep impact basin floor, permanently shadowed cold traps",
-            reason: "Extreme desiccation & volatile trapping matching Atacama core",
-            coordsText: "89.50° S, 0.00° E · -4,200 m"
-          }
-        ]
-      },
-      MARS: {
-        bodyName: "Mars",
-        ellipsoid: Cesium.Ellipsoid.WGS84,
-        sites: [
-          {
-            id: "mars-0",
-            rank: "01",
-            shortName: "Meridiani Planum",
-            fullName: "Meridiani Planum, Mars",
-            titleHtml: "Meridiani Planum,<br/>Mars",
-            lat: -1.94,
-            lon: 5.51,
-            elevation: -1500,
-            camera: { lon: 5.51, lat: -1.94, height: 1900000, headingDeg: 0, pitchDeg: -55, rollDeg: 0 },
-            regionSemiMajor: 130000,
-            regionSemiMinor: 95000,
-            color: "#ff7b54",
-            similarity: 98.5,
-            terrain: "Hematite-bearing spherules, sulfate-rich sedimentary plains",
-            reason: "High iron oxide and sulfate composition matching Meridiani analog testbeds",
-            coordsText: "1.94° S, 5.51° E · -1,500 m"
-          },
-          {
-            id: "mars-1",
-            rank: "02",
-            shortName: "Tharsis / Olympus",
-            fullName: "Tharsis Volcanic Province / Olympus Mons",
-            titleHtml: "Tharsis / Olympus,<br/>Mars",
-            lat: 18.65,
-            lon: 226.2,
-            elevation: 12000,
-            camera: { lon: 226.2, lat: 18.65, height: 2400000, headingDeg: 15, pitchDeg: -50, rollDeg: 0 },
-            regionSemiMajor: 180000,
-            regionSemiMinor: 140000,
-            color: "#f59b4c",
-            similarity: 93.1,
-            terrain: "Massive shield volcano calderas, basaltic lava flows",
-            reason: "Volcanic structure analogous to terrestrial shield formations like Mauna Kea",
-            coordsText: "18.65° N, 226.20° E · +12,000 m"
-          },
-          {
-            id: "mars-2",
-            rank: "03",
-            shortName: "Arcadia Planitia",
-            fullName: "Arcadia Planitia, Mars",
-            titleHtml: "Arcadia Planitia,<br/>Mars",
-            lat: 46.7,
-            lon: 188.0,
-            elevation: -3500,
-            camera: { lon: 188.0, lat: 46.7, height: 1900000, headingDeg: -10, pitchDeg: -55, rollDeg: 0 },
-            regionSemiMajor: 140000,
-            regionSemiMinor: 100000,
-            color: "#4cc9f0",
-            similarity: 88.4,
-            terrain: "Smooth volcanic plains, subsurface glacial ice sheets",
-            reason: "Low-relief plains with ice-rich regolith matching polar analog conditions",
-            coordsText: "46.70° N, 188.00° E · -3,500 m"
-          }
-        ]
-      }
-    };
-
-    /* =========================================================================
-       2. MISSION DASHBOARD DATASETS (SIDEBAR & DOMAIN CONTEXT)
-       ========================================================================= */
-    const analysisData = {
-      moon: {
-        title: "EARTH / MOON ANALOGS",
-        subtitle: "Top 3 Earth analog locations and Lunar equivalents for Moon Exploration.",
-        gravity: "1.62 m/s²",
-        gravityLabel: "Moon gravity",
-        missionType: "Moon Exploration",
-        pills: ["Basalt", "Anorthosite", "Ilmenite"]
       },
       mars: {
         title: "EARTH / MARS ANALOGS",
-        subtitle: "Top 3 Martian analog locations and Mars equivalents for Mars Exploration.",
+        subtitle: "Top 3 Earth analog locations for Mars Exploration Mission.",
         gravity: "3.72 m/s²",
         gravityLabel: "Mars gravity",
         missionType: "Mars Exploration",
-        pills: ["Arid Soil", "Sulfates", "Iron Oxides"]
+        pills: ["Arid Soil", "Sulfates", "Iron Oxides"],
+        analogs: [
+          {
+            rank: "01",
+            shortName: "Atacama Desert",
+            fullName: "Atacama Desert, Chile",
+            titleHtml: "Atacama Desert,<br/>Chile",
+            similarity: 98.5,
+            terrain: "Chilean hyper-arid core & perchlorate soils",
+            reason: "High UV stress, iron-rich clays & dry oxidation",
+            coords: "-23.7°, -69.1°",
+            latitude: -23.7,
+            longitude: -69.1,
+            minerals: ["Quartz", "Feldspar", "Anhydrite"]
+          },
+          {
+            rank: "02",
+            shortName: "Mojave Desert",
+            fullName: "Mojave Desert, USA",
+            titleHtml: "Mojave Desert,<br/>USA",
+            similarity: 93.1,
+            terrain: "California alluvial fans & basaltic flows",
+            reason: "Basaltic regolith simulation & wind-blown sand dunes",
+            coords: "35.0°, -115.0°",
+            latitude: 35,
+            longitude: -115,
+            minerals: ["Basalt", "Clay Smectite", "Iron Oxides"]
+          },
+          {
+            rank: "03",
+            shortName: "Devon Island",
+            fullName: "Devon Island, Canada",
+            titleHtml: "Devon Island,<br/>Canada",
+            similarity: 88.4,
+            terrain: "High Arctic impact crater & permafrost",
+            reason: "Haughton impact structure & cryogenic weathering",
+            coords: "75.1°, -88.0°",
+            latitude: 75.1,
+            longitude: -88,
+            minerals: ["Dolomite", "Silicate", "Permafrost Ice"]
+          }
+        ]
       }
     };
 
-    let currentMissionMode = 'moon';
-    let currentMapBody = 'EARTH'; // 'EARTH', 'MOON', or 'MARS'
-    let currentSceneMode = '3D';  // '3D' or '2D'
+    let currentMode = 'moon';
     let selectedSiteIdx = 0;
     let currentView = 'structure';
-    let cesiumViewer = null;
+    let cesiumViewer;
+    let moonViewer;
+    let cesiumSiteEntities = [];
+    let activeMapBody = 'earth';
 
-    /* =========================================================================
-       3. PROCEDURAL TEXTURE GENERATORS FOR EARTH, MOON & MARS GLOBES
-       ========================================================================= */
-    function createPlanetaryTexture(bodyType) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 1024;
-      canvas.height = 512;
-      const ctx = canvas.getContext('2d');
-
-      if (bodyType === 'MOON') {
-        ctx.fillStyle = '#6c7078';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        const maria = [
-          { x: 340, y: 200, rx: 140, ry: 95, alpha: 0.45 },
-          { x: 520, y: 185, rx: 85, ry: 65, alpha: 0.4 },
-          { x: 610, y: 215, rx: 70, ry: 50, alpha: 0.38 },
-          { x: 665, y: 235, rx: 65, ry: 45, alpha: 0.35 },
-          { x: 760, y: 255, rx: 45, ry: 40, alpha: 0.42 },
-          { x: 512, y: 475, rx: 220, ry: 35, alpha: 0.48 }
-        ];
-        maria.forEach(m => {
-          const grad = ctx.createRadialGradient(m.x, m.y, 10, m.x, m.y, m.rx);
-          grad.addColorStop(0, `rgba(38, 41, 48, ${m.alpha})`);
-          grad.addColorStop(1, 'rgba(38, 41, 48, 0)');
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.ellipse(m.x, m.y, m.rx, m.ry, 0, 0, Math.PI * 2);
-          ctx.fill();
-        });
-
-        let seed = 42;
-        const rand = () => {
-          seed = (seed * 16807) % 2147483647;
-          return (seed - 1) / 2147483646;
-        };
-
-        for (let i = 0; i < 420; i++) {
-          const cx = rand() * canvas.width;
-          const cy = rand() * canvas.height;
-          const r = rand() * 14 + 2;
-          ctx.strokeStyle = `rgba(215, 220, 230, ${rand() * 0.25 + 0.08})`;
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          ctx.arc(cx, cy, r, 0, Math.PI * 2);
-          ctx.stroke();
-
-          ctx.fillStyle = `rgba(45, 48, 55, ${rand() * 0.25})`;
-          ctx.beginPath();
-          ctx.arc(cx + 1, cy + 1, r * 0.85, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      } else if (bodyType === 'MARS') {
-        const marsGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        marsGrad.addColorStop(0, '#8c3b1e');
-        marsGrad.addColorStop(0.5, '#bd532a');
-        marsGrad.addColorStop(1, '#6b2710');
-        ctx.fillStyle = marsGrad;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        const regions = [
-          { x: 450, y: 220, rx: 180, ry: 90, color: '#541e0a', alpha: 0.6 },
-          { x: 300, y: 160, rx: 90, ry: 50, color: '#3d1205', alpha: 0.7 },
-          { x: 700, y: 280, rx: 110, ry: 70, color: '#4a1908', alpha: 0.5 }
-        ];
-        regions.forEach(r => {
-          ctx.fillStyle = r.color;
-          ctx.beginPath();
-          ctx.ellipse(r.x, r.y, r.rx, r.ry, 0, 0, Math.PI * 2);
-          ctx.fill();
-        });
-
-        ctx.fillStyle = '#f0f4f8';
-        ctx.beginPath();
-        ctx.ellipse(512, 10, 350, 25, 0, 0, Math.PI * 2);
-        ctx.ellipse(512, 502, 380, 22, 0, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        const oceanGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        oceanGrad.addColorStop(0, '#0a1f3d');
-        oceanGrad.addColorStop(0.5, '#103766');
-        oceanGrad.addColorStop(1, '#0a1f3d');
-        ctx.fillStyle = oceanGrad;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        const continents = [
-          { x: 565, y: 235, rx: 68, ry: 92, color: '#8a7356' },
-          { x: 625, y: 195, rx: 36, ry: 32, color: '#9c8261' },
-          { x: 680, y: 125, rx: 165, ry: 68, color: '#4c6b45' },
-          { x: 230, y: 135, rx: 105, ry: 65, color: '#4f6e48' },
-          { x: 315, y: 315, rx: 52, ry: 88, color: '#587849' },
-          { x: 855, y: 335, rx: 46, ry: 34, color: '#966b46' },
-          { x: 512, y: 495, rx: 512, ry: 22, color: '#dce6f2' }
-        ];
-
-        continents.forEach(c => {
-          ctx.fillStyle = c.color;
-          ctx.beginPath();
-          ctx.ellipse(c.x, c.y, c.rx, c.ry, 0.12, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      }
-
-      ctx.strokeStyle = bodyType === 'MOON' ? 'rgba(245, 155, 76, 0.16)' : bodyType === 'MARS' ? 'rgba(245, 138, 76, 0.2)' : 'rgba(76, 201, 240, 0.16)';
-      ctx.lineWidth = 1;
-      for (let x = 0; x <= canvas.width; x += 64) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-      }
-      for (let y = 0; y <= canvas.height; y += 64) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-      }
-
-      return canvas.toDataURL('image/png');
-    }
-
-    /* =========================================================================
-       4. CESIUM.JS INITIALIZATION & SWITCHMAP ENGINE
-       ========================================================================= */
-    function initCesiumGlobe() {
-      Cesium.Ellipsoid.default = Cesium.Ellipsoid.WGS84;
-
-      cesiumViewer = new Cesium.Viewer('cesiumContainer', {
-        animation: false,
-        baseLayerPicker: false,
-        fullscreenButton: false,
-        vrButton: false,
-        geocoder: false,
-        homeButton: false,
-        infoBox: false,
-        sceneModePicker: false,
-        selectionIndicator: false,
-        timeline: false,
-        navigationHelpButton: false,
-        navigationInstructionsInitiallyVisible: false,
-        creditContainer: document.createElement('div'),
-        imageryProvider: false,
-        skyBox: false,
-        skyAtmosphere: false,
-        contextOptions: {
-          webgl: { alpha: true }
-        }
-      });
-
-      cesiumViewer.scene.backgroundColor = new Cesium.Color(0.02, 0.03, 0.08, 0.92);
-      cesiumViewer.scene.globe.enableLighting = false;
-      cesiumViewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#11182d');
-
-      const handler = new Cesium.ScreenSpaceEventHandler(cesiumViewer.scene.canvas);
-      handler.setInputAction((movement) => {
-        const picked = cesiumViewer.scene.pick(movement.position);
-        if (Cesium.defined(picked) && picked.id && typeof picked.id.siteIndex === 'number') {
-          selectSite(picked.id.siteIndex);
-        }
-      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-      updateMapTabsAndSwitch('EARTH');
-    }
-
-    /**
-     * Updates map tabs based on active Mission mode.
-     * Strict Rule: Mars mode ONLY shows Mars and Earth Analogs. Moon mode ONLY shows Earth and Moon. NO cross-contamination.
-     */
-    function updateMapTabsAndSwitch(defaultMapKey) {
-      const tabsContainer = document.getElementById('map-tabs-container');
-      
-      if (currentMissionMode === 'moon') {
-        tabsContainer.innerHTML = `
-          <button class="map-body-btn ${defaultMapKey === 'EARTH' ? 'active' : ''}" id="tab-earth" onclick="switchMap('EARTH')">
-            <i class="fa-solid fa-earth-americas"></i> Earth
-          </button>
-          <button class="map-body-btn ${defaultMapKey === 'MOON' ? 'active' : ''}" id="tab-moon" onclick="switchMap('MOON')">
-            <i class="fa-solid fa-moon"></i> Moon
-          </button>
-        `;
-        currentMapBody = (defaultMapKey === 'MOON' || defaultMapKey === 'EARTH') ? defaultMapKey : 'EARTH';
-      } else {
-        tabsContainer.innerHTML = `
-          <button class="map-body-btn ${defaultMapKey === 'MARS' ? 'active' : ''}" id="tab-mars" onclick="switchMap('MARS')">
-            <i class="fa-solid fa-globe"></i> Mars
-          </button>
-          <button class="map-body-btn ${defaultMapKey === 'EARTH' ? 'active' : ''}" id="tab-earth" onclick="switchMap('EARTH')">
-            <i class="fa-solid fa-earth-americas"></i> Earth Analogs
-          </button>
-        `;
-        currentMapBody = (defaultMapKey === 'MARS' || defaultMapKey === 'EARTH') ? defaultMapKey : 'EARTH';
-      }
-
-      switchMap(currentMapBody);
-    }
-
-    function switchMap(targetBody) {
-      const normalizedBody = targetBody.toUpperCase();
-      currentMapBody = normalizedBody;
-
-      document.querySelectorAll('.map-body-btn').forEach(btn => {
-        const btnText = btn.textContent.toUpperCase();
-        const matches = (normalizedBody === 'EARTH' && btnText.includes('EARTH')) ||
-                        (normalizedBody === 'MOON' && btnText.includes('MOON')) ||
-                        (normalizedBody === 'MARS' && btnText.includes('MARS'));
-        btn.classList.toggle('active', matches);
-      });
-
-      const dataset = cesiumDatasets[normalizedBody];
-      const targetEllipsoid = dataset.ellipsoid;
-
-      Cesium.Ellipsoid.default = targetEllipsoid;
-      if (cesiumViewer && cesiumViewer.scene) {
-        cesiumViewer.scene.globe.show = false;
-        cesiumViewer.scene.globe._ellipsoid = targetEllipsoid;
-        if (cesiumViewer.scene.mapProjection) {
-          cesiumViewer.scene.mapProjection._ellipsoid = targetEllipsoid;
-        }
-
-        cesiumViewer.imageryLayers.removeAll();
-        const textureUrl = createPlanetaryTexture(normalizedBody);
-        cesiumViewer.imageryLayers.addImageryProvider(
-          new Cesium.SingleTileImageryProvider({
-            url: textureUrl,
-            ellipsoid: targetEllipsoid
-          })
-        );
-
-        cesiumViewer.scene.globe.baseColor = normalizedBody === 'MOON'
-          ? Cesium.Color.fromCssColorString('#5a5e66')
-          : normalizedBody === 'MARS'
-          ? Cesium.Color.fromCssColorString('#bd532a')
-          : Cesium.Color.fromCssColorString('#0e294b');
-
-        cesiumViewer.scene.globe.show = true;
-
-        cesiumViewer.entities.removeAll();
-        loadCesiumEntities(normalizedBody);
-      }
-
-      document.getElementById('cesium-ellipsoid-tag').textContent =
-        normalizedBody === 'MOON' ? 'IAU MOON ELLIPSOID · R=1737.4km' :
-        normalizedBody === 'MARS' ? 'MARS ELLIPSOID SIMULATION' : 'WGS84 ELLIPSOID · CESIUM';
-
-      document.getElementById('selected-site-eyebrow').textContent =
-        normalizedBody === 'MOON' ? 'SELECTED LUNAR EQUIVALENT' :
-        normalizedBody === 'MARS' ? 'SELECTED MARS ANALOG' : 'SELECTED EARTH ANALOG';
-
-      selectedSiteIdx = 0;
-      renderRankCards();
-      updateSelectedSite(0, true);
-    }
-
-    function loadCesiumEntities(bodyKey) {
-      const dataset = cesiumDatasets[bodyKey];
-      const ellipsoid = dataset.ellipsoid;
-
-      dataset.sites.forEach((site, idx) => {
-        const position = Cesium.Cartesian3.fromDegrees(site.lon, site.lat, site.elevation, ellipsoid);
-        const isSelected = idx === selectedSiteIdx;
-        const cssColor = Cesium.Color.fromCssColorString(site.color);
-
-        const pointEntity = cesiumViewer.entities.add({
-          id: `${site.id}-point`,
-          name: site.fullName,
-          position: position,
+    function renderCesiumSites() {
+      if (!cesiumViewer) return;
+      cesiumSiteEntities.forEach((entity) => cesiumViewer.entities.remove(entity));
+      cesiumSiteEntities = analysisData[currentMode].analogs.map((site, idx) => {
+        const entity = cesiumViewer.entities.add({
+          name: site.shortName,
+          position: Cesium.Cartesian3.fromDegrees(site.longitude, site.latitude),
           point: {
-            pixelSize: isSelected ? 14 : 10,
-            color: cssColor,
+            color: idx === selectedSiteIdx ? Cesium.Color.fromCssColorString('#ff7b54') : Cesium.Color.fromCssColorString('#f59b4c'),
             outlineColor: Cesium.Color.WHITE,
-            outlineWidth: isSelected ? 3 : 1.5,
-            disableDepthTestDistance: Number.POSITIVE_INFINITY
+            outlineWidth: 2,
+            pixelSize: idx === selectedSiteIdx ? 12 : 9,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
           },
           label: {
-            text: `${site.rank} · ${site.shortName}`,
-            font: 'bold 11px Silkscreen, monospace',
+            text: site.shortName,
+            font: '12px Silkscreen, monospace',
             fillColor: Cesium.Color.WHITE,
             outlineColor: Cesium.Color.BLACK,
-            outlineWidth: 3,
+            outlineWidth: 2,
             style: Cesium.LabelStyle.FILL_AND_OUTLINE,
             pixelOffset: new Cesium.Cartesian2(0, -18),
-            disableDepthTestDistance: Number.POSITIVE_INFINITY
-          },
-          ellipse: {
-            semiMajorAxis: site.regionSemiMajor,
-            semiMinorAxis: site.regionSemiMinor,
-            height: 0,
-            material: cssColor.withAlpha(isSelected ? 0.38 : 0.18),
-            outline: true,
-            outlineColor: cssColor.withAlpha(isSelected ? 0.95 : 0.55),
-            outlineWidth: 2
+            distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 12000000)
           }
         });
-
-        pointEntity.siteIndex = idx;
+        entity.siteIndex = idx;
+        return entity;
       });
+      cesiumSiteEntities.forEach((entity) => {
+        entity.show = activeMapBody === 'earth';
+      });
+      if (activeMapBody === 'earth') focusCesiumSite(selectedSiteIdx);
     }
 
-    function flyToCesiumSite(site) {
-      if (!cesiumViewer) return;
-      const ellipsoid = cesiumDatasets[currentMapBody].ellipsoid;
-      const cam = site.camera;
-
-      const destination = Cesium.Cartesian3.fromDegrees(
-        cam.lon,
-        cam.lat,
-        cam.height, // Zoomed out camera height parameter
-        ellipsoid
-      );
-
+    function focusCesiumSite(idx) {
+      const site = analysisData[currentMode].analogs[idx];
+      if (!site || !cesiumViewer) return;
       cesiumViewer.camera.flyTo({
-        destination: destination,
-        orientation: {
-          heading: Cesium.Math.toRadians(cam.headingDeg),
-          pitch: Cesium.Math.toRadians(cam.pitchDeg),
-          roll: Cesium.Math.toRadians(cam.rollDeg)
-        },
-        duration: 1.4
+        destination: Cesium.Cartesian3.fromDegrees(site.longitude, site.latitude, 1800000),
+        duration: 0.8
       });
     }
 
-    function setCesiumSceneMode(mode) {
-      playClickSound();
-      currentSceneMode = mode;
-      document.getElementById('btn-view-3d').classList.toggle('active', mode === '3D');
-      document.getElementById('btn-view-2d').classList.toggle('active', mode === '2D');
+    function switchMapBody(body) {
+      activeMapBody = body;
+      document.querySelectorAll('[data-body]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.body === body);
+      });
 
-      if (!cesiumViewer) return;
-      if (mode === '2D') {
-        cesiumViewer.scene.morphTo2D(0.8);
+      if (body === 'moon') {
+        if (!moonViewer) {
+          moonViewer = new Cesium.Viewer('cesium-moon-map', {
+            animation: false,
+            baseLayer: false,
+            baseLayerPicker: false,
+            ellipsoid: Cesium.Ellipsoid.MOON,
+            fullscreenButton: false,
+            geocoder: false,
+            globe: new Cesium.Globe(Cesium.Ellipsoid.MOON),
+            homeButton: false,
+            infoBox: false,
+            navigationHelpButton: false,
+            sceneModePicker: false,
+            selectionIndicator: false,
+            timeline: false
+          });
+          moonViewer.imageryLayers.addImageryProvider(
+            new Cesium.SingleTileImageryProvider({
+              url: Cesium.buildModuleUrl('Assets/Textures/moonSmall.jpg')
+            })
+          );
+          moonViewer.scene.screenSpaceCameraController.minimumZoomDistance = 250000;
+        }
+        document.getElementById('cesium-map').classList.remove('active');
+        document.getElementById('cesium-moon-map').classList.add('active');
+        moonViewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(0, 0, 3500000, Cesium.Ellipsoid.MOON),
+          duration: 0.8
+        });
       } else {
-        cesiumViewer.scene.morphTo3D(0.8);
+        document.getElementById('cesium-moon-map').classList.remove('active');
+        document.getElementById('cesium-map').classList.add('active');
+        focusCesiumSite(selectedSiteIdx);
       }
     }
 
-    /* =========================================================================
-       5. WEB AUDIO SYNTHESIZER
-       ========================================================================= */
+    /* ==========================================
+       WEB AUDIO SYNTHESIZER (Ambient UI)
+       ========================================== */
     let audioCtx = null;
     let isSoundEnabled = false;
     let ambientOsc = null;
@@ -1722,7 +1445,7 @@
 
         isSoundEnabled = true;
         icon.className = 'fa-solid fa-volume-high';
-        if (label) label.textContent = 'MUTE';
+        if(label) label.textContent = 'MUTE';
         playBeep(660, 0.08);
       } else {
         if (ambientOsc) {
@@ -1732,7 +1455,7 @@
         }
         isSoundEnabled = false;
         icon.className = 'fa-solid fa-volume-xmark';
-        if (label) label.textContent = 'AUDIO';
+        if(label) label.textContent = 'AUDIO';
       }
     }
 
@@ -1754,9 +1477,6 @@
       playBeep(740, 0.05);
     }
 
-    /* =========================================================================
-       6. UI INTERACTION & STATE SYNCHRONIZATION
-       ========================================================================= */
     document.addEventListener('DOMContentLoaded', () => {
       /* Starfield Background */
       const canvas = document.getElementById('starfield-canvas');
@@ -1815,7 +1535,6 @@
       resizeCanvas();
       animateStars();
 
-      /* Dark / Light Theme Toggle */
       document.getElementById('theme-toggle').addEventListener('click', () => {
         playClickSound();
         currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -1825,29 +1544,83 @@
         createStars();
       });
 
-      /* Re-run Similarity Analysis Simulation */
-      document.getElementById('btn-rerun').addEventListener('click', () => {
-        playClickSound();
-        const sites = cesiumDatasets[currentMapBody].sites;
-        const baseScores = [94.8, 89.2, 82.5];
-        sites.forEach((site, idx) => {
-          const delta = (Math.random() * 0.8 - 0.4);
-          site.similarity = Math.round((baseScores[idx] + delta) * 10) / 10;
+      /* CesiumJS map */
+      cesiumViewer = new Cesium.Viewer('cesium-map', {
+        animation: false,
+        baseLayer: false,
+        baseLayerPicker: false,
+        fullscreenButton: false,
+        geocoder: false,
+        homeButton: false,
+        infoBox: false,
+        navigationHelpButton: false,
+        sceneModePicker: false,
+        selectionIndicator: false,
+        timeline: false
+      });
+      cesiumViewer.imageryLayers.addImageryProvider(
+        new Cesium.UrlTemplateImageryProvider({
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          credit: 'Tiles © Esri'
+        })
+      );
+      cesiumViewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#101733');
+      cesiumViewer.scene.screenSpaceCameraController.minimumZoomDistance = 250000;
+
+      const mapClickHandler = new Cesium.ScreenSpaceEventHandler(cesiumViewer.scene.canvas);
+      mapClickHandler.setInputAction((movement) => {
+        const picked = cesiumViewer.scene.pick(movement.position);
+        if (Cesium.defined(picked) && picked.id && Number.isInteger(picked.id.siteIndex)) {
+          selectSite(picked.id.siteIndex);
+        }
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+      document.querySelectorAll('[data-body]').forEach((button) => {
+        button.addEventListener('click', () => {
+          playClickSound();
+          switchMapBody(button.dataset.body);
         });
-        renderRankCards();
-        updateSelectedSite(selectedSiteIdx, true);
       });
 
-      /* Initialize Cesium Globe & Dashboard */
-      initCesiumGlobe();
+      /* 2D/3D Toggle */
+      const mapModeBtns = document.querySelectorAll('[data-map]');
+
+      mapModeBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          playClickSound();
+          mapModeBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const activeViewer = activeMapBody === 'moon' ? moonViewer : cesiumViewer;
+          if (btn.dataset.map === '2d') {
+            activeViewer.scene.morphTo2D(0.8);
+          } else {
+            activeViewer.scene.morphTo3D(0.8);
+          }
+        });
+      });
+
+      document.getElementById('btn-rerun').addEventListener('click', () => {
+        playClickSound();
+        const analogs = analysisData[currentMode].analogs;
+        analogs.forEach((site, idx) => {
+          const base = [94.8, 89.2, 82.5][idx];
+          const delta = (Math.random() * 0.6 - 0.3);
+          site.similarity = Math.round((base + delta) * 10) / 10;
+        });
+        renderRankCards();
+        updateSelectedSite(selectedSiteIdx);
+      });
+
       switchAnalysisMode('moon');
     });
 
     function switchAnalysisMode(mode) {
-      playClickSound();
-      currentMissionMode = mode;
-      document.getElementById('btn-mode-moon').classList.toggle('active', mode === 'moon');
-      document.getElementById('btn-mode-mars').classList.toggle('active', mode === 'mars');
+      currentMode = mode;
+      selectedSiteIdx = 0;
+      const moonBtn = document.getElementById('btn-mode-moon');
+      const marsBtn = document.getElementById('btn-mode-mars');
+      if (moonBtn) moonBtn.classList.toggle('active', mode === 'moon');
+      if (marsBtn) marsBtn.classList.toggle('active', mode === 'mars');
 
       const data = analysisData[mode];
       document.getElementById('sidebar-gravity').innerHTML = `${data.gravity.split(' ')[0]}<span class="unit">m/s²</span>`;
@@ -1859,17 +1632,16 @@
       const pillContainer = document.getElementById('mineral-pills');
       pillContainer.innerHTML = data.pills.map(p => `<span class="pill-white">${p}</span>`).join('');
 
-      // Strict separation: When Mars mode is active, default map body is MARS (no Moon option). When Moon mode is active, default is EARTH/MOON.
-      const defaultTarget = mode === 'mars' ? 'MARS' : 'EARTH';
-      updateMapTabsAndSwitch(defaultTarget);
-
+      renderRankCards();
+      updateSelectedSite(0);
+      renderCesiumSites();
       switchView(currentView);
     }
 
     function renderRankCards() {
       const container = document.getElementById('rank-cards-container');
-      const sites = cesiumDatasets[currentMapBody].sites;
-      container.innerHTML = sites.map((site, idx) => `
+      const analogs = analysisData[currentMode].analogs;
+      container.innerHTML = analogs.map((site, idx) => `
         <article class="rank-card ${idx === selectedSiteIdx ? 'selected' : ''}" data-site="${idx}" onclick="selectSite(${idx})" tabindex="0">
           <div class="rank-card-header">
             <span class="rank-label">RANK ${site.rank}</span>
@@ -1883,42 +1655,33 @@
 
     function selectSite(idx) {
       playClickSound();
-      updateSelectedSite(idx, true);
+      updateSelectedSite(idx);
     }
 
-    function cycleSite(delta) {
-      playClickSound();
-      const total = cesiumDatasets[currentMapBody].sites.length;
-      const nextIdx = (selectedSiteIdx + delta + total) % total;
-      updateSelectedSite(nextIdx, true);
-    }
-
-    function updateSelectedSite(idx, shouldFly = true) {
+    function updateSelectedSite(idx) {
       selectedSiteIdx = idx;
-      const sites = cesiumDatasets[currentMapBody].sites;
-      const site = sites[idx];
+      const site = analysisData[currentMode].analogs[idx];
 
       document.querySelectorAll('.rank-card').forEach((card, i) => {
         card.classList.toggle('selected', i === idx);
       });
 
-      if (cesiumViewer) {
-        cesiumViewer.entities.removeAll();
-        loadCesiumEntities(currentMapBody);
-        if (shouldFly) {
-          flyToCesiumSite(site);
-        }
-      }
+      cesiumSiteEntities.forEach((entity, siteIdx) => {
+        entity.point.color = siteIdx === idx
+          ? Cesium.Color.fromCssColorString('#ff7b54')
+          : Cesium.Color.fromCssColorString('#f59b4c');
+        entity.point.pixelSize = siteIdx === idx ? 12 : 9;
+      });
+      if (cesiumViewer) focusCesiumSite(idx);
 
       document.getElementById('selected-rank-num').textContent = site.rank;
       document.getElementById('selected-site-name').innerHTML = site.titleHtml;
       document.getElementById('selected-similarity').textContent = `${site.similarity.toFixed(1)}% Similarity`;
       document.getElementById('selected-terrain').textContent = site.terrain;
       document.getElementById('selected-reason').textContent = site.reason;
-      document.getElementById('selected-coords').textContent = site.coordsText;
+      document.getElementById('selected-coords').textContent = site.coords;
       document.getElementById('selected-progress-bar').style.width = `${site.similarity}%`;
       document.getElementById('status-testbed').textContent = site.shortName;
-      document.getElementById('cesium-active-coords').textContent = site.coordsText;
     }
 
     function switchView(viewType) {
@@ -1927,7 +1690,7 @@
       document.querySelector(`[data-view="${viewType}"]`).classList.add('active');
 
       const container = document.getElementById('rightSidebarStats');
-      if (currentMissionMode === 'moon') {
+      if (currentMode === 'moon') {
         if (viewType === 'structure') {
           container.innerHTML = `
             <div class="planet-stats-block">
@@ -1995,19 +1758,17 @@
       }
     }
 
-    function handlePhaseNav(stepNum, btnEl) {
-      playClickSound();
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      if (btnEl) btnEl.classList.add('active');
-      const labels = {
-        1: 'Step 01 · Mission Setup',
-        2: 'Step 02 · Analog Finder',
-        3: 'Step 03 · Site Details',
-        4: 'Step 04 · Analysis',
-        5: 'Step 05 · Telemetry Reports'
-      };
-      document.getElementById('step-pill-label').textContent = labels[stepNum] || 'Step 04 · Analysis';
+    function navigateTo(stepNum) {
+      if (stepNum === 1) window.location.href = 'index.html';
+      if (stepNum === 2) {
+        if (currentMode === 'mars') window.location.href = 'mainmars.html';
+        else window.location.href = 'main2.html';
+      }
+      if (stepNum === 3) window.location.href = 'main4.html';
+      if (stepNum === 4) window.location.href = 'main6.html';
+      if (stepNum === 5) window.location.href = 'main7.html';
     }
   </script>
+  <script src="main.js"></script>
 </body>
 </html>
