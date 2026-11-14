@@ -7,6 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.130/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.130/Build/Cesium/Cesium.js"></script>
+  <script src="cesium-config.js"></script>
 
   <style>
     :root {
@@ -474,36 +477,77 @@
 
     .dim-toggle {
       display: flex;
-      gap: 6px;
+      gap: 8px;
     }
 
-    .dim-btn {
-      padding: 4px 10px;
+    .map-body-toggle {
+      display: flex;
+      gap: 8px;
+      margin: 4px 0;
+    }
+
+    .map-control-btn {
+      padding: 6px 10px;
+      border: 1px solid var(--border-color);
       border-radius: 999px;
-      font-size: 0.62rem;
-      background: transparent;
+      background: var(--btn-secondary-bg);
       color: var(--text-secondary);
+      font-size: 0.62rem;
+      transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
     }
 
-    .dim-btn.active {
-      background: var(--pill-bg);
-      color: var(--pill-text);
+    .map-control-btn:hover:not(:disabled) {
+      border-color: var(--accent-orange);
+    }
+
+    .map-control-btn.active {
+      border-color: var(--accent-orange);
+      background: var(--accent-orange);
+      color: var(--accent-orange-text);
       font-weight: 700;
     }
 
-    .coordinate-viewport {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      margin: 6px 0;
+    .map-control-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
     }
 
-    .grid-svg {
-      width: 100%;
+    .map-body-btn {
+      flex: 1;
+    }
+
+    .coordinate-viewport {
+      flex: none;
+      position: relative;
+      margin: 6px 0;
       height: 165px;
-      transition: transform 0.35s ease;
+      min-height: 165px;
+    }
+
+    .cesium-map {
+      width: 100%;
+      height: 100%;
+      min-height: 165px;
+      overflow: hidden;
+    }
+
+    .map-token-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px;
+      text-align: center;
+      background: var(--card-bg-inner);
+      color: var(--text-secondary);
+      font-size: 0.62rem;
+    }
+
+    .map-token-overlay[hidden] {
+      display: none;
     }
 
     .map-footer-tag {
@@ -586,25 +630,6 @@
       font-weight: 700;
       text-align: right;
       line-height: 1.35;
-    }
-
-    .coord-bar-wrap {
-      margin-top: 8px;
-    }
-
-    .coord-bar-track {
-      width: 100%;
-      height: 4px;
-      background: var(--gauge-track);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .coord-bar-fill {
-      width: 78%;
-      height: 100%;
-      background: linear-gradient(90deg, #4b8df8, var(--accent-orange));
-      border-radius: 4px;
     }
 
     /* Bottom 3 Rank Cards */
@@ -885,7 +910,7 @@
           </div>
           <div class="kv-row">
             <span class="kv-key">TESTBED</span>
-            <span class="kv-val" id="left-testbed">EASTERN DESERT</span>
+            <span class="kv-val" id="left-testbed">SAN RAFAEL / MDRS</span>
           </div>
         </div>
       </section>
@@ -927,52 +952,26 @@
         <!-- Coordinate Grid Card -->
         <div class="card map-card">
           <div class="map-top-bar">
-            <span class="map-label">MAP · ARCGIS / CESIUM HOOK</span>
+            <span class="map-label" id="map-label">NASA BLUE MARBLE · EARTH ANALOG SITES</span>
             <div class="dim-toggle">
-              <button class="dim-btn active" data-dim="3d">3D</button>
-              <button class="dim-btn" data-dim="2d">2D</button>
+              <button class="map-control-btn dim-btn active" data-dim="3d">3D</button>
+              <button class="map-control-btn dim-btn" data-dim="2d">2D</button>
             </div>
           </div>
 
           <div class="coordinate-viewport">
-            <svg id="coord-grid-svg" class="grid-svg" viewBox="0 0 320 170">
-              <!-- Skewed 3D-style grid lines -->
-              <g id="grid-lines" stroke="rgba(140, 150, 189, 0.25)" stroke-width="1">
-                <line x1="65" y1="30" x2="275" y2="30" />
-                <line x1="50" y1="60" x2="260" y2="60" />
-                <line x1="35" y1="90" x2="245" y2="90" />
-                <line x1="20" y1="120" x2="230" y2="120" />
-                <line x1="5" y1="150" x2="215" y2="150" />
-
-                <line x1="65" y1="30" x2="5" y2="150" />
-                <line x1="117" y1="30" x2="57" y2="150" />
-                <line x1="170" y1="30" x2="110" y2="150" />
-                <line x1="222" y1="30" x2="162" y2="150" />
-                <line x1="275" y1="30" x2="215" y2="150" />
-              </g>
-
-              <!-- Plot Point 2: Mauna Kea -->
-              <g class="map-pin" data-site="1" style="cursor:pointer;">
-                <circle cx="72" cy="84" r="4" fill="#f58c62" />
-                <text x="82" y="87" fill="var(--text-secondary)" font-size="7.5" font-family="Silkscreen">MAUNA KEA</text>
-              </g>
-
-              <!-- Plot Point 3: Atacama Desert -->
-              <g class="map-pin" data-site="2" style="cursor:pointer;">
-                <circle cx="106" cy="112" r="4" fill="#f58c62" />
-                <text x="116" y="115" fill="var(--text-secondary)" font-size="7.5" font-family="Silkscreen">ATACAMA DESERT</text>
-              </g>
-
-              <!-- Plot Point 1: Eastern Desert (Active) -->
-              <g class="map-pin" data-site="0" style="cursor:pointer;">
-                <circle id="active-ring" cx="176" cy="88" r="11" fill="rgba(245, 155, 76, 0.18)" stroke="#f59b4c" stroke-width="1.2" />
-                <circle id="active-dot" cx="176" cy="88" r="4.5" fill="#f59b4c" />
-                <text id="active-pin-label" x="192" y="91" fill="var(--text-primary)" font-size="7.5" font-family="Silkscreen">EASTERN DESERT</text>
-              </g>
-            </svg>
+            <div id="cesium-map" class="cesium-map" role="application" aria-label="Interactive Cesium map of Earth and Mars"></div>
+            <div id="map-token-overlay" class="map-token-overlay">
+              <span id="map-status" aria-live="polite">LOADING CESIUM MAP...</span>
+            </div>
           </div>
 
-          <div class="map-footer-tag">SAMPLE COORDINATE PLOT</div>
+          <div class="map-body-toggle" role="group" aria-label="Select map planet">
+            <button class="map-control-btn map-body-btn active" id="map-body-earth" data-body="earth" type="button" aria-pressed="true" disabled>EARTH</button>
+            <button class="map-control-btn map-body-btn" id="map-body-mars" data-body="mars" type="button" aria-pressed="false" disabled>MARS</button>
+          </div>
+
+          <div class="map-footer-tag">SELECT A SITE PIN · DRAG TO ROTATE · SCROLL TO ZOOM</div>
         </div>
 
         <!-- Selected Site Details Card -->
@@ -981,66 +980,60 @@
             <div class="site-head">
               <div class="site-rank-badge" id="detail-num">01</div>
               <div>
-                <div class="site-overline">SELECTED SITE</div>
-                <h2 class="site-name-title" id="detail-title">EASTERN DESERT,<br>EGYPT</h2>
+                <div class="site-overline">SELECTED ANALOG</div>
+                <h2 class="site-name-title" id="detail-title">SAN RAFAEL SWELL / MDRS</h2>
               </div>
             </div>
 
             <div class="detail-rows">
               <div class="detail-row">
-                <span class="detail-k">SIMILARITY</span>
-                <span class="detail-v" id="detail-sim">94.8%</span>
+                <span class="detail-k">LOCATION</span>
+                <span class="detail-v" id="detail-location">UTAH, UNITED STATES</span>
               </div>
               <div class="detail-row">
-                <span class="detail-k">TERRAIN</span>
-                <span class="detail-v" id="detail-terrain">HYPER-ARID, FRACTURED<br>GRANITE & ALLUVIAL OUTWASH</span>
+                <span class="detail-k">LATITUDE</span>
+                <span class="detail-v" id="detail-latitude">38.4°</span>
               </div>
               <div class="detail-row">
-                <span class="detail-k">WHY IT MATCHES</span>
-                <span class="detail-v" id="detail-match">DRY WEATHERING AND<br>ROCKY REGOLITH-LIKE<br>SURFACES</span>
+                <span class="detail-k">LONGITUDE</span>
+                <span class="detail-v" id="detail-longitude">-110.7°</span>
               </div>
               <div class="detail-row">
-                <span class="detail-k">COORDINATES</span>
-                <span class="detail-v" id="detail-coords">26°, 33°</span>
+                <span class="detail-k">ELEVATION</span>
+                <span class="detail-v" id="detail-elevation">1,350 M</span>
               </div>
-            </div>
-          </div>
-
-          <div class="coord-bar-wrap">
-            <div class="coord-bar-track">
-              <div class="coord-bar-fill" id="detail-bar" style="width: 94.8%;"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 3 Ranked Analog Cards -->
+      <!-- 3 Earth Analog Cards -->
       <div class="rank-cards-grid">
         <article class="rank-card selected" data-site="0">
           <div class="rank-card-top">
-            <span>RANK 01</span>
-            <span class="rank-score">94.8%</span>
+            <span>ANALOG 01</span>
+            <span class="rank-score">ELEV. 1,350 M</span>
           </div>
-          <h3 class="rank-title">EASTERN DESERT, EGYPT</h3>
-          <p class="rank-desc">HYPER-ARID, FRACTURED GRANITE & ALLUVIAL OUTWASH</p>
+          <h3 class="rank-title">SAN RAFAEL SWELL / MDRS</h3>
+          <p class="rank-desc">UTAH, UNITED STATES · 38.4°, -110.7°</p>
         </article>
 
         <article class="rank-card" data-site="1">
           <div class="rank-card-top">
-            <span>RANK 02</span>
-            <span class="rank-score">89.2%</span>
+            <span>ANALOG 02</span>
+            <span class="rank-score">ELEV. 350 M</span>
           </div>
-          <h3 class="rank-title">MAUNA KEA, HAWAII</h3>
-          <p class="rank-desc">BASALTIC SCORIA, CINDER CONES, HIGH UV</p>
+          <h3 class="rank-title">RIO TINTO</h3>
+          <p class="rank-desc">SPAIN · 37.7°, -6.5°</p>
         </article>
 
         <article class="rank-card" data-site="2">
           <div class="rank-card-top">
-            <span>RANK 03</span>
-            <span class="rank-score">82.5%</span>
+            <span>ANALOG 03</span>
+            <span class="rank-score">ELEV. 100 M</span>
           </div>
-          <h3 class="rank-title">ATACAMA DESERT, CHILE</h3>
-          <p class="rank-desc">SALT PAN CRUST, NEAR-ZERO MOISTURE</p>
+          <h3 class="rank-title">MCMURDO DRY VALLEYS</h3>
+          <p class="rank-desc">ANTARCTICA · -77.5°, 161.8°</p>
         </article>
       </div>
 
@@ -1264,80 +1257,265 @@
       const sites = [
         {
           num: '01',
-          shortName: 'EASTERN DESERT',
-          title: 'EASTERN DESERT,<br>EGYPT',
-          sim: '94.8%',
-          terrain: 'HYPER-ARID, FRACTURED<br>GRANITE & ALLUVIAL OUTWASH',
-          match: 'DRY WEATHERING AND<br>ROCKY REGOLITH-LIKE<br>SURFACES',
-          coords: '26°, 33°',
-          cx: 176,
-          cy: 88,
-          labelX: 192,
-          labelY: 91
+          shortName: 'SAN RAFAEL / MDRS',
+          title: 'SAN RAFAEL SWELL / MDRS',
+          location: 'UTAH, UNITED STATES',
+          latitude: 38.4,
+          longitude: -110.7,
+          elevation: '1,350 M'
         },
         {
           num: '02',
-          shortName: 'MAUNA KEA',
-          title: 'MAUNA KEA,<br>HAWAII',
-          sim: '89.2%',
-          terrain: 'BASALTIC SCORIA, CINDER<br>CONES & TEPHRA FIELDS',
-          match: 'IRON-RICH VOLCANIC<br>MINERALOGY & HIGH<br>SOLAR RADIATION',
-          coords: '19.8°, -155.5°',
-          cx: 72,
-          cy: 84,
-          labelX: 82,
-          labelY: 87
+          shortName: 'RIO TINTO',
+          title: 'RIO TINTO',
+          location: 'SPAIN',
+          latitude: 37.7,
+          longitude: -6.5,
+          elevation: '350 M'
         },
         {
           num: '03',
-          shortName: 'ATACAMA DESERT',
-          title: 'ATACAMA DESERT,<br>CHILE',
-          sim: '82.5%',
-          terrain: 'SALT PAN CRUST, SULFATES<br>& HYPER-ARID REGOLITH',
-          match: 'PERCHLORATE CHEMISTRY<br>& EXTREME DESICCATION<br>PROFILES',
-          coords: '-24.5°, -69.2°',
-          cx: 106,
-          cy: 112,
-          labelX: 116,
-          labelY: 115
+          shortName: 'MCMURDO DRY VALLEYS',
+          title: 'MCMURDO DRY VALLEYS',
+          location: 'ANTARCTICA',
+          latitude: -77.5,
+          longitude: 161.8,
+          elevation: '100 M'
         }
       ];
 
       const rankCards = document.querySelectorAll('.rank-card');
-      const mapPins = document.querySelectorAll('.map-pin');
+      const mapStatus = document.getElementById('map-status');
+      const mapTokenOverlay = document.getElementById('map-token-overlay');
+      const mapLabel = document.getElementById('map-label');
+      const mapBodyButtons = document.querySelectorAll('.map-body-btn');
+      let cesiumViewer = null;
+      let mapEntities = [];
+      let marsEntities = [];
+      let mapMode = '3d';
+      let mapBody = 'earth';
+      let selectedSiteIdx = 0;
 
       function selectSite(idx) {
         playTone(620, 0.06);
+        selectedSiteIdx = idx;
         const s = sites[idx];
         rankCards.forEach((c, i) => c.classList.toggle('selected', i === idx));
 
         document.getElementById('detail-num').textContent = s.num;
-        document.getElementById('detail-title').innerHTML = s.title;
-        document.getElementById('detail-sim').textContent = s.sim;
-        document.getElementById('detail-terrain').innerHTML = s.terrain;
-        document.getElementById('detail-match').innerHTML = s.match;
-        document.getElementById('detail-coords').textContent = s.coords;
-        document.getElementById('detail-bar').style.width = s.sim;
+        document.getElementById('detail-title').textContent = s.title;
+        document.getElementById('detail-location').textContent = s.location;
+        document.getElementById('detail-latitude').textContent = `${s.latitude}°`;
+        document.getElementById('detail-longitude').textContent = `${s.longitude}°`;
+        document.getElementById('detail-elevation').textContent = s.elevation;
         document.getElementById('left-testbed').textContent = s.shortName;
 
-        const ring = document.getElementById('active-ring');
-        const dot = document.getElementById('active-dot');
-        const label = document.getElementById('active-pin-label');
-        ring.setAttribute('cx', s.cx);
-        ring.setAttribute('cy', s.cy);
-        dot.setAttribute('cx', s.cx);
-        dot.setAttribute('cy', s.cy);
-        label.setAttribute('x', s.labelX);
-        label.setAttribute('y', s.labelY);
-        label.textContent = s.shortName;
+        mapEntities.forEach((entity, entityIdx) => {
+          entity.point.pixelSize = entityIdx === idx ? 13 : 9;
+          entity.point.color = entityIdx === idx ? Cesium.Color.fromCssColorString('#f59b4c') : Cesium.Color.fromCssColorString('#f58c62');
+        });
+        if (cesiumViewer && mapBody === 'earth') {
+          cesiumViewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(s.longitude, s.latitude, 1800000),
+            duration: 1
+          });
+        }
       }
+
+      async function createEarthImageryProvider() {
+        const token = typeof window.CESIUM_ION_ACCESS_TOKEN === 'string'
+          ? window.CESIUM_ION_ACCESS_TOKEN.trim()
+          : '';
+        return token
+          ? await Cesium.IonImageryProvider.fromAssetId(2)
+          : new Cesium.UrlTemplateImageryProvider({
+              url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg',
+              credit: 'NASA GIBS / Blue Marble (MODIS)',
+              tilingScheme: new Cesium.WebMercatorTilingScheme(),
+              maximumLevel: 8
+            });
+      }
+
+      function createMarsImageryProvider() {
+        return new Cesium.UrlTemplateImageryProvider({
+            url: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg',
+            credit: 'NASA / JPL / USGS Mars Trek',
+            tilingScheme: new Cesium.GeographicTilingScheme({
+              ellipsoid: Cesium.Ellipsoid.MARS
+            }),
+            maximumLevel: 7
+        });
+      }
+
+      async function switchMapBody(body) {
+        if (!cesiumViewer || body === mapBody) return;
+
+        try {
+          if (body === 'mars') {
+            cesiumViewer.imageryLayers.removeAll();
+            cesiumViewer.scene.globe = new Cesium.Globe(Cesium.Ellipsoid.MARS);
+              cesiumViewer.scene.globe.enableLighting = true;
+              cesiumViewer.scene.globe.showGroundAtmosphere = false;
+              cesiumViewer.scene.skyAtmosphere = new Cesium.SkyAtmosphere(Cesium.Ellipsoid.MARS);
+              cesiumViewer.imageryLayers.addImageryProvider(createMarsImageryProvider());
+            marsEntities.forEach((entity) => { entity.show = true; });
+            mapEntities.forEach((entity) => { entity.show = false; });
+            cesiumViewer.camera.flyTo({
+              destination: Cesium.Cartesian3.fromDegrees(0, 15, 6500000, Cesium.Ellipsoid.MARS),
+              duration: 1
+            });
+          } else {
+            const imageryProvider = await createEarthImageryProvider();
+            cesiumViewer.imageryLayers.removeAll();
+            cesiumViewer.scene.globe = new Cesium.Globe(Cesium.Ellipsoid.WGS84);
+            cesiumViewer.scene.globe.show = true;
+            cesiumViewer.scene.globe.enableLighting = true;
+            cesiumViewer.scene.globe.showGroundAtmosphere = true;
+            cesiumViewer.scene.skyAtmosphere = new Cesium.SkyAtmosphere(Cesium.Ellipsoid.WGS84);
+            cesiumViewer.imageryLayers.addImageryProvider(imageryProvider);
+            marsEntities.forEach((entity) => { entity.show = false; });
+            mapEntities.forEach((entity) => { entity.show = true; });
+            const site = sites[selectedSiteIdx];
+            cesiumViewer.camera.flyTo({
+              destination: Cesium.Cartesian3.fromDegrees(site.longitude, site.latitude, 1800000),
+              duration: 1
+            });
+          }
+
+          mapBody = body;
+          mapBodyButtons.forEach((button) => {
+            const isActive = button.dataset.body === body;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+          });
+          mapLabel.textContent = body === 'earth'
+            ? 'NASA BLUE MARBLE · EARTH ANALOG SITES'
+            : 'NASA VIKING MOSAIC · MARS LANDMARKS';
+          mapStatus.textContent = body === 'earth' ? 'EARTH IMAGERY READY.' : 'MARS IMAGERY READY.';
+          mapTokenOverlay.hidden = true;
+        } catch (error) {
+          console.error('Unable to switch map imagery:', error);
+          mapStatus.textContent = 'PLANET IMAGERY FAILED TO LOAD. CHECK THE NETWORK CONNECTION.';
+          mapTokenOverlay.hidden = false;
+        }
+      }
+
+      async function initializeCesiumMap(token) {
+        if (cesiumViewer) {
+          cesiumViewer.destroy();
+          cesiumViewer = null;
+        }
+        mapEntities = [];
+        mapStatus.textContent = 'LOADING EARTH IMAGERY...';
+
+        try {
+          if (token) Cesium.Ion.defaultAccessToken = token;
+          cesiumViewer = new Cesium.Viewer('cesium-map', {
+            animation: false,
+            baseLayer: false,
+            baseLayerPicker: false,
+            fullscreenButton: false,
+            geocoder: false,
+            homeButton: false,
+            navigationHelpButton: false,
+            sceneModePicker: false,
+            timeline: false
+          });
+          cesiumViewer.imageryLayers.addImageryProvider(await createEarthImageryProvider());
+          mapEntities = sites.map((site, idx) => cesiumViewer.entities.add({
+            id: `analog-site-${idx}`,
+            position: Cesium.Cartesian3.fromDegrees(site.longitude, site.latitude),
+            point: {
+              color: idx === 0 ? Cesium.Color.fromCssColorString('#f59b4c') : Cesium.Color.fromCssColorString('#f58c62'),
+              outlineColor: Cesium.Color.WHITE,
+              outlineWidth: 1,
+              pixelSize: idx === 0 ? 13 : 9
+            },
+            label: {
+              text: site.shortName,
+              font: '12px Silkscreen',
+              fillColor: Cesium.Color.WHITE,
+              outlineColor: Cesium.Color.BLACK,
+              outlineWidth: 2,
+              pixelOffset: new Cesium.Cartesian2(0, -18),
+              disableDepthTestDistance: Number.POSITIVE_INFINITY
+            }
+          }));
+          const marsLocations = [
+            { name: 'JEZERO CRATER', latitude: 18.4, longitude: 77.7 },
+            { name: 'OLYMPUS MONS', latitude: 18.65, longitude: -133.8 }
+          ];
+          marsEntities = marsLocations.map((location, idx) => cesiumViewer.entities.add({
+            id: `mars-landmark-${idx}`,
+            show: false,
+            position: Cesium.Cartesian3.fromDegrees(
+              location.longitude,
+              location.latitude,
+              0,
+              Cesium.Ellipsoid.MARS
+            ),
+            point: {
+              color: Cesium.Color.fromCssColorString('#f59b4c'),
+              outlineColor: Cesium.Color.WHITE,
+              outlineWidth: 1,
+              pixelSize: 10
+            },
+            label: {
+              text: location.name,
+              font: '12px Silkscreen',
+              fillColor: Cesium.Color.WHITE,
+              outlineColor: Cesium.Color.BLACK,
+              outlineWidth: 2,
+              pixelOffset: new Cesium.Cartesian2(0, -18),
+              disableDepthTestDistance: Number.POSITIVE_INFINITY
+            }
+          }));
+
+          const clickHandler = new Cesium.ScreenSpaceEventHandler(cesiumViewer.scene.canvas);
+          clickHandler.setInputAction((movement) => {
+            const picked = cesiumViewer.scene.pick(movement.position);
+            if (!Cesium.defined(picked) || !picked.id) return;
+            const siteIdx = mapEntities.findIndex((entity) => entity === picked.id);
+            if (siteIdx !== -1 && mapBody === 'earth') {
+              selectSite(siteIdx);
+              return;
+            }
+            const marsIdx = marsEntities.findIndex((entity) => entity === picked.id);
+            if (marsIdx !== -1 && mapBody === 'mars') {
+              const location = marsLocations[marsIdx];
+              cesiumViewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(
+                  location.longitude,
+                  location.latitude,
+                  900000,
+                  Cesium.Ellipsoid.MARS
+                ),
+                duration: 1
+              });
+            }
+          }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+          if (mapMode === '2d') cesiumViewer.scene.morphTo2D(0);
+          mapTokenOverlay.hidden = true;
+          mapBodyButtons.forEach((button) => { button.disabled = false; });
+          selectSite(0);
+        } catch {
+          if (cesiumViewer) cesiumViewer.destroy();
+          cesiumViewer = null;
+          mapEntities = [];
+          mapStatus.textContent = 'CESIUM MAP FAILED TO LOAD. CHECK THE NETWORK CONNECTION AND TOKEN CONFIGURATION.';
+          mapTokenOverlay.hidden = false;
+        }
+      }
+
+      initializeCesiumMap(window.CESIUM_ION_ACCESS_TOKEN);
+
+      mapBodyButtons.forEach((button) => {
+        button.addEventListener('click', () => switchMapBody(button.dataset.body));
+      });
 
       rankCards.forEach((card) => {
         card.addEventListener('click', () => selectSite(parseInt(card.dataset.site)));
-      });
-
-      mapPins.forEach((pin) => {
-        pin.addEventListener('click', () => selectSite(parseInt(pin.dataset.site)));
       });
 
       /* 3D / 2D Map Toggle */
@@ -1346,8 +1524,11 @@
           playTone(500, 0.05);
           document.querySelectorAll('.dim-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-          const svg = document.getElementById('coord-grid-svg');
-          svg.style.transform = btn.dataset.dim === '2d' ? 'rotateX(32deg) scale(0.95)' : 'none';
+          mapMode = btn.dataset.dim;
+          if (cesiumViewer) {
+            if (mapMode === '2d') cesiumViewer.scene.morphTo2D();
+            else cesiumViewer.scene.morphTo3D();
+          }
         });
       });
 
