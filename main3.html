@@ -841,7 +841,7 @@
       <div class="hero-header">
         <div class="step-pill" id="hero-step-pill">Step 01 · Setup</div>
         <h1 class="hero-title">PLANETARY<br />COMPARISON</h1>
-        <p class="hero-subtitle">Select a planetary comparison card to initialize and launch respective telemetry modules.</p>
+        <p class="hero-subtitle">Select a planetary comparison card to initialize and launch its telemetry module.</p>
       </div>
 
       <!-- Interactive Comparison Cards with Dynamic Routing -->
@@ -881,6 +881,7 @@
             </div>
           </div>
         </article>
+
       </div>
 
       <!-- Step Progress Bar & Prev Button Only -->
@@ -1188,6 +1189,7 @@
       function startMissionRoute(target) {
         const route = missionRoutes[target];
         sessionStorage.setItem('lunarse_target', target);
+        sessionStorage.setItem('active_card', `card-${target}`);
         sessionStorage.setItem('lunarse_route', JSON.stringify(route));
         sessionStorage.setItem('lunarse_step_index', '0');
         window.location.href = route[0];
