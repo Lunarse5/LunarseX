@@ -1281,7 +1281,6 @@
       if (stepNum === 2) {
         const selectedCard = sessionStorage.getItem('active_card');
         if (selectedCard === 'card-mars') window.location.href = 'mainmars.html';
-        else if (selectedCard === 'card-all') window.location.href = 'main3.html';
         else window.location.href = 'main2.html';
       }
       if (stepNum === 3) window.location.href = 'main4.html';
@@ -1289,13 +1288,6 @@
         const selectedCard = sessionStorage.getItem('active_card');
         if (selectedCard === 'card-mars') {
           window.location.href = 'main9.html';
-        } else if (selectedCard === 'card-moon') {
-          window.location.href = 'main6.html';
-        } else if (selectedCard === 'card-all') {
-          document.querySelector('.stepper-nav-buttons').scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-          });
         } else {
           window.location.href = 'main6.html';
         }
