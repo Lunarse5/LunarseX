@@ -1,1351 +1,1254 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LUNARSE X — Planetary Comparison</title>
-  <!-- Crisp Pixelated Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
-
-  <style>
-    /* =========================================================
-       CSS CUSTOM PROPERTIES (DARK & LIGHT THEMES)
-       ========================================================= */
-    :root {
-      --font-display: 'Press Start 2P', monospace;
-      --font-ui: 'Silkscreen', monospace;
-
-      --bg-color: #060919;
-      --card-bg: rgba(13, 18, 43, 0.78);
-      --card-bg-elevated: rgba(20, 27, 61, 0.88);
-      --text-primary: #f4f6ff;
-      --text-secondary: #8c96bd;
-      --border-color: rgba(110, 128, 196, 0.25);
-      --border-glow: rgba(245, 162, 84, 0.75);
-      --accent-orange: #f59b4c;
-      --accent-orange-hover: #ffad63;
-      --accent-orange-text: #140d05;
-      --pill-bg: #ffffff;
-      --pill-text: #0b0f26;
-      --gauge-track: rgba(255, 255, 255, 0.1);
-      --btn-secondary-bg: rgba(28, 36, 74, 0.9);
-      --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.45);
-    }
-
-    [data-theme="light"] {
-      --bg-color: #eef2f9;
-      --card-bg: rgba(255, 255, 255, 0.85);
-      --card-bg-elevated: rgba(244, 247, 254, 0.95);
-      --text-primary: #101733;
-      --text-secondary: #525f85;
-      --border-color: rgba(35, 52, 105, 0.18);
-      --border-glow: #e8832a;
-      --accent-orange: #ea862f;
-      --accent-orange-hover: #d8741e;
-      --accent-orange-text: #ffffff;
-      --pill-bg: #101733;
-      --pill-text: #ffffff;
-      --gauge-track: rgba(16, 23, 51, 0.12);
-      --btn-secondary-bg: #dce3f2;
-      --shadow-card: 0 10px 28px rgba(24, 39, 75, 0.08);
-    }
-
-    /* =========================================================
-       RESET & BASE TYPOGRAPHY
-       ========================================================= */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: var(--font-ui);
-      background-color: var(--bg-color);
-      color: var(--text-primary);
-      min-height: 100vh;
-      overflow-x: hidden;
-      transition: background-color 0.35s ease, color 0.35s ease;
-      position: relative;
-    }
-
-    button {
-      font-family: var(--font-ui);
-      cursor: pointer;
-      border: none;
-      outline: none;
-    }
-
-    #starfield-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    /* =========================================================
-       TOP NAVIGATION BAR
-       ========================================================= */
-    .top-nav {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 32px;
-      border-bottom: 1px solid var(--border-color);
-      background: var(--card-bg);
-      backdrop-filter: blur(10px);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .pixel-logo {
-      display: grid;
-      grid-template-columns: repeat(2, 6px);
-      gap: 2px;
-    }
-
-    .pixel-logo span {
-      width: 6px;
-      height: 6px;
-      background: var(--text-primary);
-      display: block;
-    }
-
-    .pixel-logo span:nth-child(2) {
-      background: var(--accent-orange);
-    }
-
-    .brand-name {
-      font-family: var(--font-display);
-      font-size: 0.85rem;
-      letter-spacing: 1px;
-    }
-
-    .nav-tabs {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .nav-tab {
-      background: transparent;
-      color: var(--text-secondary);
-      font-size: 0.78rem;
-      padding: 6px 2px;
-      position: relative;
-      transition: color 0.2s ease;
-    }
-
-    .nav-tab:hover,
-    .nav-tab.active {
-      color: var(--text-primary);
-    }
-
-    .nav-tab.active::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: -4px;
-      height: 2px;
-      background: var(--text-primary);
-    }
-
-    .nav-controls {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-    }
-
-    .theme-btn {
-      background: var(--btn-secondary-bg);
-      color: var(--text-primary);
-      border: 1px solid var(--border-color);
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.72rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: transform 0.15s ease, border-color 0.2s ease;
-    }
-
-    .theme-btn:hover {
-      border-color: var(--accent-orange);
-      transform: translateY(-1px);
-    }
-
-    .live-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-    }
-
-    .live-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #38e58c;
-      box-shadow: 0 0 8px #38e58c;
-      animation: pulseDot 1.8s infinite;
-    }
-
-    @keyframes pulseDot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.45; transform: scale(0.85); }
-    }
-
-    /* =========================================================
-       3-COLUMN DASHBOARD GRID
-       ========================================================= */
-    .dashboard-grid {
-      position: relative;
-      z-index: 5;
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 24px 32px 40px;
-      display: grid;
-      grid-template-columns: 280px 1fr 290px;
-      gap: 24px;
-      align-items: start;
-    }
-
-    .sidebar-left,
-    .sidebar-right {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 18px;
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow-card);
-      transition: background-color 0.35s ease, border-color 0.35s ease;
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-
-    .card-title {
-      font-size: 0.85rem;
-      font-weight: 700;
-    }
-
-    .badge-outline {
-      font-size: 0.62rem;
-      padding: 3px 7px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      color: var(--text-secondary);
-      letter-spacing: 0.5px;
-    }
-
-    /* =========================================================
-       LEFT SIDEBAR CARDS
-       ========================================================= */
-    .gravity-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px;
-    }
-
-    .gravity-col {
-      flex: 1;
-    }
-
-    .gravity-divider {
-      width: 1px;
-      height: 44px;
-      background: var(--border-color);
-      margin: 0 12px;
-    }
-
-    .metric-big {
-      font-family: var(--font-display);
-      font-size: 0.92rem;
-      margin-bottom: 6px;
-    }
-
-    .metric-big .unit {
-      font-family: var(--font-ui);
-      font-size: 0.65rem;
-      color: var(--text-secondary);
-      margin-left: 3px;
-    }
-
-    .metric-sub {
-      font-size: 0.68rem;
-      color: var(--text-secondary);
-    }
-
-    .ring-wrapper {
-      display: flex;
-      justify-content: center;
-      margin: 14px 0 20px;
-    }
-
-    .outer-dashed-ring {
-      width: 132px;
-      height: 132px;
-      border-radius: 50%;
-      border: 1px dashed var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .progress-circle {
-      width: 98px;
-      height: 98px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #ffbe85, #e88446);
-      box-shadow: 0 0 24px rgba(245, 155, 76, 0.35);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
-    }
-
-    .ring-percent {
-      font-family: var(--font-display);
-      font-size: 0.95rem;
-    }
-
-    .ring-label {
-      font-size: 0.6rem;
-      margin-top: 4px;
-      opacity: 0.9;
-    }
-
-    .kv-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .kv-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.72rem;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .kv-row:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    .kv-key {
-      color: var(--text-secondary);
-    }
-
-    .kv-val {
-      font-weight: 700;
-    }
-
-    .wireframe-box {
-      height: 68px;
-      margin: 10px 0 14px;
-      color: var(--text-secondary);
-    }
-
-    .terrain-svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .pill-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .pill-white {
-      background: var(--pill-bg);
-      color: var(--pill-text);
-      font-size: 0.62rem;
-      padding: 5px 9px;
-      border-radius: 999px;
-      font-weight: 700;
-    }
-
-    /* =========================================================
-       CENTER MAIN STAGE
-       ========================================================= */
-    .center-stage {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 8px;
-    }
-
-    .hero-header {
-      text-align: center;
-      margin-bottom: 26px;
-    }
-
-    .step-pill {
-      display: inline-block;
-      background: var(--pill-bg);
-      color: var(--pill-text);
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 6px 14px;
-      border-radius: 999px;
-      margin-bottom: 16px;
-    }
-
-    .hero-title {
-      font-family: var(--font-display);
-      font-size: 1.75rem;
-      line-height: 1.45;
-      letter-spacing: 2px;
-      margin-bottom: 12px;
-    }
-
-    .hero-subtitle {
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      max-width: 560px;
-      margin: 0 auto;
-      line-height: 1.5;
-    }
-
-    .comparison-cards {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      width: 100%;
-      margin-bottom: 24px;
-    }
-
-    .compare-card {
-      background: var(--card-bg);
-      border: 2px solid var(--border-color);
-      border-radius: 16px;
-      padding: 12px;
-      cursor: pointer;
-      transition: transform 0.2s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-      backdrop-filter: blur(12px);
-    }
-
-    .compare-card:hover {
-      transform: translateY(-3px);
-    }
-
-    .compare-card.selected {
-      border-color: var(--border-glow);
-      box-shadow: 0 0 24px rgba(245, 155, 76, 0.25);
-    }
-
-    .illustration-full {
-      position: relative;
-      height: 148px;
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 14px;
-    }
-
-    .illustration-full img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      image-rendering: pixelated;
-    }
-
-    .all-missions-illustration {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle, rgba(245, 155, 76, 0.18), var(--card-bg-inner) 72%);
-    }
-
-    .all-missions-illustration .planet-icons {
-      gap: 16px;
-    }
-
-    .all-missions-illustration .mini-planet {
-      width: 32px;
-      height: 32px;
-    }
-
-    .compare-card-footer {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 4px 4px 6px;
-    }
-
-    .planet-icons {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .mini-planet {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .earth-icon {
-      background: radial-gradient(circle at 35% 35%, #55b7ff, #1d56a8 70%, #2b8a57);
-    }
-
-    .moon-icon {
-      background: radial-gradient(circle at 35% 35%, #cfd5e3, #7a8194);
-    }
-
-    .mars-icon {
-      background: radial-gradient(circle at 35% 35%, #eb7a52, #9e391b);
-    }
-
-    .compare-info h3 {
-      font-size: 0.82rem;
-      margin-bottom: 4px;
-    }
-
-    .compare-info p {
-      font-size: 0.68rem;
-      color: var(--text-secondary);
-      line-height: 1.35;
-    }
-
-    /* =========================================================
-       STEP PROGRESS BAR & PREV BUTTON BELOW
-       ========================================================= */
-    .stepper-container {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .stepper-bar {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px;
-    }
-
-    .step-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-secondary);
-      font-size: 0.72rem;
-      cursor: pointer;
-      transition: color 0.2s ease;
-    }
-
-    .step-num {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.65rem;
-    }
-
-    .step-item.active {
-      color: var(--text-primary);
-      font-weight: 700;
-    }
-
-    .step-item.active .step-num {
-      border-color: var(--text-primary);
-      background: var(--pill-bg);
-      color: var(--pill-text);
-    }
-
-    .step-line {
-      flex: 1;
-      height: 1px;
-      border-top: 1px dashed var(--border-color);
-      margin: 0 8px;
-    }
-
-    .stepper-nav-buttons {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-    }
-
-    .nav-action-btn {
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      transition: transform 0.15s ease, background-color 0.2s ease, opacity 0.2s ease;
-    }
-
-    .nav-action-btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-    }
-
-    .nav-action-btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
-    .btn-prev {
-      background: var(--btn-secondary-bg);
-      color: var(--text-primary);
-      border: 1px solid var(--border-color);
-    }
-
-    /* =========================================================
-       RIGHT SIDEBAR CARDS
-       ========================================================= */
-    .view-toggle-pills {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .view-pill {
-      padding: 6px 14px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      background: transparent;
-      color: var(--text-secondary);
-      border: 1px solid transparent;
-    }
-
-    .view-pill.active {
-      background: var(--pill-bg);
-      color: var(--pill-text);
-      font-weight: 700;
-    }
-
-    .planet-stats-block {
-      margin-bottom: 18px;
-    }
-
-    .planet-stats-block:last-child {
-      margin-bottom: 0;
-    }
-
-    .stat-header-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.78rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .stat-bar-track {
-      width: 100%;
-      height: 4px;
-      background: var(--gauge-track);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-
-    .stat-bar-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width 0.4s ease;
-    }
-
-    .earth-fill {
-      background: linear-gradient(90deg, #4b8df8, var(--accent-orange));
-    }
-
-    .target-fill {
-      background: linear-gradient(90deg, #659df7, #a4c6ff);
-    }
-
-    .stat-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.7rem;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .stat-row:last-child {
-      border-bottom: none;
-    }
-
-    .stat-k {
-      color: var(--text-secondary);
-    }
-
-    .stat-v {
-      font-weight: 700;
-    }
-
-    @media (max-width: 1180px) {
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-      .sidebar-left,
-      .sidebar-right {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      }
-    }
-
-    @media (max-width: 720px) {
-      .top-nav {
-        flex-direction: column;
-        gap: 12px;
-        padding: 14px 16px;
-      }
-      .nav-tabs {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
-      }
-      .comparison-cards {
-        grid-template-columns: 1fr;
-      }
-      .hero-title {
-        font-size: 1.25rem;
-      }
-      .stepper-bar {
-        flex-wrap: wrap;
-        gap: 10px;
-        justify-content: center;
-      }
-      .step-line {
-        display: none;
-      }
-    }
-  </style>
-</head>
-<body>
-  <!-- Full-Screen Glowing Twinkling Canvas Background -->
-  <canvas id="starfield-canvas" aria-hidden="true"></canvas>
-
-  <!-- Top Navigation Bar -->
-  <header class="top-nav">
-    <div class="brand">
-      <div class="pixel-logo" aria-hidden="true">
-        <span></span><span></span><span></span><span></span>
-      </div>
-      <span class="brand-name">LUNARSE X</span>
-    </div>
-
-    <nav class="nav-tabs" id="top-nav-tabs" aria-label="Mission Phases">
-      <button class="nav-tab active" data-step="1">Setup</button>
-      <button class="nav-tab" data-step="2">Analog Finder</button>
-      <button class="nav-tab" data-step="3">Details</button>
-      <button class="nav-tab" data-step="4">Analysis</button>
-      <button class="nav-tab" data-step="5">Reports</button>
-    </nav>
-
-    <div class="nav-controls">
-      <button id="theme-toggle" class="theme-btn" aria-label="Toggle Dark and Light Mode">
-        <span id="theme-icon">☀</span> <span id="theme-label">LIGHT</span>
-      </button>
-      <div class="live-status">
-        <span>UPD: live</span>
-        <span class="live-dot"></span>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main 3-Column Dashboard Grid -->
-  <main class="dashboard-grid">
-    <!-- LEFT SIDEBAR -->
-    <aside class="sidebar-left">
-      <!-- 1. Gravity Comparison Card -->
-      <section class="card gravity-card">
-        <div class="gravity-col">
-          <div class="metric-big">9.81<span class="unit">m/s²</span></div>
-          <div class="metric-sub">Earth gravity</div>
-        </div>
-        <div class="gravity-divider"></div>
-        <div class="gravity-col">
-          <div class="metric-big" id="left-target-gravity">1.62<span class="unit">m/s²</span></div>
-          <div class="metric-sub" id="left-target-label">Moon gravity</div>
-        </div>
-      </section>
-
-      <!-- 2. Mission Status Card -->
-      <section class="card mission-card">
-        <div class="card-header">
-          <h2 class="card-title">Mission status</h2>
-          <span class="badge-outline">SETUP</span>
-        </div>
-
-        <div class="ring-wrapper">
-          <div class="outer-dashed-ring">
-            <div class="progress-circle">
-              <span class="ring-percent" id="mission-percent">20%</span>
-              <span class="ring-label">complete</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="kv-list">
-          <div class="kv-row">
-            <span class="kv-key">Phase</span>
-            <span class="kv-val" id="mission-phase-val">Setup</span>
-          </div>
-          <div class="kv-row">
-            <span class="kv-key">Mission</span>
-            <span class="kv-val">Planetary Setup</span>
-          </div>
-          <div class="kv-row">
-            <span class="kv-key">Testbed</span>
-            <span class="kv-val">Active Grid</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- 3. 3D Projection Card -->
-      <section class="card projection-card">
-        <div class="card-header">
-          <h2 class="card-title">3D Projection</h2>
-          <span class="badge-outline">REFERENCE</span>
-        </div>
-
-        <div class="wireframe-box">
-          <svg viewBox="0 0 260 65" class="terrain-svg" preserveAspectRatio="none">
-            <path d="M0,45 Q35,20 70,42 T140,35 T210,48 T260,30" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
-            <path d="M0,38 Q45,55 85,30 T165,45 T230,25 T260,40" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
-            <path d="M0,52 Q50,28 100,48 T180,28 T260,46" fill="none" stroke="var(--accent-orange)" stroke-width="1.5" opacity="0.85"/>
-            <path d="M0,26 Q60,46 120,24 T200,42 T260,22" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
-          </svg>
-        </div>
-
-        <div class="pill-group">
-          <span class="pill-white">Basalt</span>
-          <span class="pill-white">Hematite</span>
-          <span class="pill-white">Perchlorate</span>
-        </div>
-      </section>
-    </aside>
-
-    <!-- CENTER MAIN STAGE -->
-    <section class="center-stage">
-      <div class="hero-header">
-        <div class="step-pill" id="hero-step-pill">Step 01 · Setup</div>
-        <h1 class="hero-title">PLANETARY<br />COMPARISON</h1>
-        <p class="hero-subtitle">Choose Earth–Mars, Earth–Moon, or All Missions to open the corresponding mission options.</p>
-      </div>
-
-      <!-- Interactive Comparison Cards with Dynamic Routing -->
-      <div class="comparison-cards">
-        <!-- Card 1: Earth vs Moon -> Navigates to main2.html then main4.html -> main6.html -> main7.html -->
-        <article class="compare-card selected" id="card-moon" data-target="moon" tabindex="0">
-          <div class="illustration-full">
-            <img src="WhatsApp Image 2026-11-13 at 15.47.20.jpeg" alt="Earth from Moon Surface Pixel Art" />
-          </div>
-
-          <div class="compare-card-footer">
-            <div class="planet-icons">
-              <span class="mini-planet earth-icon"></span>
-              <span class="mini-planet moon-icon"></span>
-            </div>
-            <div class="compare-info">
-              <h3>Earth vs Moon</h3>
-              <p>Dry highland and regolith-like testbeds</p>
-            </div>
-          </div>
-        </article>
-
-        <!-- Card 2: Earth vs Mars -> Navigates to mainmars.html then main4.html -> main9.html -> main7.html -->
-        <article class="compare-card" id="card-mars" data-target="mars" tabindex="0">
-          <div class="illustration-full">
-            <img src="WhatsApp Image 2026-11-13 at 15.24.54.jpeg" alt="Mars Landscape Pixel Art" />
-          </div>
-
-          <div class="compare-card-footer">
-            <div class="planet-icons">
-              <span class="mini-planet earth-icon"></span>
-              <span class="mini-planet mars-icon"></span>
-            </div>
-            <div class="compare-info">
-              <h3>Earth vs Mars</h3>
-              <p>Hyper-arid, iron-rich terrain testbeds</p>
-            </div>
-          </div>
-        </article>
-
-        <article class="compare-card" id="card-all" data-target="all" tabindex="0">
-          <div class="illustration-full all-missions-illustration" aria-hidden="true">
-            <div class="planet-icons">
-              <span class="mini-planet earth-icon"></span>
-              <span class="mini-planet mars-icon"></span>
-              <span class="mini-planet moon-icon"></span>
-            </div>
-          </div>
-
-          <div class="compare-card-footer">
-            <div class="compare-info">
-              <h3>All Missions</h3>
-              <p>Access both Earth–Mars and Earth–Moon analysis routes</p>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      <!-- Step Progress Bar & Prev Button Only -->
-      <div class="stepper-container">
-        <div class="card stepper-bar" id="stepper-bar">
-          <div class="step-item active" data-step="1">
-            <span class="step-num">1</span>
-            <span class="step-name">Setup</span>
-          </div>
-          <div class="step-line"></div>
-          <div class="step-item" data-step="2">
-            <span class="step-num">2</span>
-            <span class="step-name">Analog Finder</span>
-          </div>
-          <div class="step-line"></div>
-          <div class="step-item" data-step="3">
-            <span class="step-num">3</span>
-            <span class="step-name">Details</span>
-          </div>
-          <div class="step-line"></div>
-          <div class="step-item" data-step="4">
-            <span class="step-num">4</span>
-            <span class="step-name">Analysis</span>
-          </div>
-          <div class="step-line"></div>
-          <div class="step-item" data-step="5">
-            <span class="step-num">5</span>
-            <span class="step-name">Reports</span>
-          </div>
-        </div>
-
-        <!-- Prev Button Only -->
-        <div class="stepper-nav-buttons">
-          <button id="btn-prev" class="nav-action-btn btn-prev">&lt; Prev</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- RIGHT SIDEBAR -->
-    <aside class="sidebar-right">
-      <!-- 1. View / Data Comparison Card -->
-      <section class="card view-card">
-        <div class="card-header">
-          <h2 class="card-title">View</h2>
-          <span class="badge-outline">REFERENCE</span>
-        </div>
-
-        <div class="view-toggle-pills">
-          <button class="view-pill active" data-view="structure">Structure</button>
-          <button class="view-pill" data-view="composition">Composition</button>
-        </div>
-
-        <!-- Earth Section -->
-        <div class="planet-stats-block">
-          <div class="stat-header-row">
-            <span class="stat-planet-name">Earth</span>
-            <span class="stat-planet-val" id="earth-val-1">9.81 m/s²</span>
-          </div>
-          <div class="stat-bar-track">
-            <div class="stat-bar-fill earth-fill" style="width: 100%;"></div>
-          </div>
-
-          <div class="stat-row">
-            <span class="stat-k" id="earth-key-2">Temp</span>
-            <span class="stat-v" id="earth-val-2">15 °C avg</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-k" id="earth-key-3">Pressure</span>
-            <span class="stat-v" id="earth-val-3">101.3 kPa</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-k" id="earth-key-4">Day</span>
-            <span class="stat-v" id="earth-val-4">24 h</span>
-          </div>
-        </div>
-
-        <!-- Target Planet (Moon / Mars) Section -->
-        <div class="planet-stats-block">
-          <div class="stat-header-row">
-            <span class="stat-planet-name" id="target-planet-name">Moon</span>
-            <span class="stat-planet-val" id="target-val-1">1.62 m/s²</span>
-          </div>
-          <div class="stat-bar-track">
-            <div class="stat-bar-fill target-fill" id="target-bar-fill" style="width: 24%;"></div>
-          </div>
-
-          <div class="stat-row">
-            <span class="stat-k" id="target-key-2">Temp</span>
-            <span class="stat-v" id="target-val-2">-173...127 °C</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-k" id="target-key-3">Pressure</span>
-            <span class="stat-v" id="target-val-3">≈ 0 (trace)</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-k" id="target-key-4">Day</span>
-            <span class="stat-v" id="target-val-4">29.5 days</span>
-          </div>
-        </div>
-      </section>
-    </aside>
-  </main>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      /* =========================================================
-         1. GLOWING TWINKLING STARFIELD CANVAS GENERATOR
-         ========================================================= */
-      const canvas = document.getElementById('starfield-canvas');
-      const ctx = canvas.getContext('2d');
-      let stars = [];
-      let currentTheme = 'dark';
-
-      const starColorsDark = ['#ffffff', '#ffe4b5', '#9ec5ff', '#f59b4c'];
-      const starColorsLight = ['#e69d35', '#3b82f6', '#7c6cf0', '#f59e0b'];
-
-      function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        createStars();
-      }
-
-      function createStars() {
-        const count = Math.floor((canvas.width * canvas.height) / 7000);
-        const palette = currentTheme === 'dark' ? starColorsDark : starColorsLight;
-
-        stars = Array.from({ length: count }, () => ({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          size: Math.random() * 2.5 + 0.8,
-          baseAlpha: Math.random() * 0.7 + 0.25,
-          twinkleSpeed: Math.random() * 0.045 + 0.012,
-          phase: Math.random() * Math.PI * 2,
-          driftY: (Math.random() - 0.5) * 0.15,
-          color: palette[Math.floor(Math.random() * palette.length)],
-          isCrossSparkle: Math.random() > 0.72
-        }));
-      }
-
-      function animateStars() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        stars.forEach((s) => {
-          s.phase += s.twinkleSpeed;
-          s.y += s.driftY;
-
-          if (s.y < 0) s.y = canvas.height;
-          if (s.y > canvas.height) s.y = 0;
-
-          const alpha = Math.max(0.1, Math.min(1, s.baseAlpha + Math.sin(s.phase) * 0.48));
-
-          ctx.save();
-          ctx.globalAlpha = alpha;
-          ctx.fillStyle = s.color;
-          ctx.shadowBlur = currentTheme === 'dark' ? 12 : 8;
-          ctx.shadowColor = s.color;
-
-          const pxSize = Math.round(s.size * 1.5);
-          ctx.fillRect(Math.round(s.x), Math.round(s.y), pxSize, pxSize);
-
-          if (s.isCrossSparkle && alpha > 0.58) {
-            ctx.fillRect(Math.round(s.x - pxSize), Math.round(s.y), pxSize * 3, Math.max(1, Math.floor(pxSize / 2)));
-            ctx.fillRect(Math.round(s.x), Math.round(s.y - pxSize), Math.max(1, Math.floor(pxSize / 2)), pxSize * 3);
-          }
-
-          ctx.restore();
-        });
-
-        requestAnimationFrame(animateStars);
-      }
-
-      window.addEventListener('resize', resizeCanvas);
-      resizeCanvas();
-      animateStars();
-
-      /* =========================================================
-         2. DARK / LIGHT MODE TOGGLE
-         ========================================================= */
-      const themeToggleBtn = document.getElementById('theme-toggle');
-      const themeIcon = document.getElementById('theme-icon');
-      const themeLabel = document.getElementById('theme-label');
-
-      themeToggleBtn.addEventListener('click', () => {
-        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', currentTheme);
-
-        if (currentTheme === 'light') {
-          themeIcon.textContent = '☾';
-          themeLabel.textContent = 'DARK';
-        } else {
-          themeIcon.textContent = '☀';
-          themeLabel.textContent = 'LIGHT';
-        }
-
-        createStars();
-      });
-
-      /* =========================================================
-         3. PLANETARY COMPARISON DATA & DYNAMIC UPDATES
-         ========================================================= */
-      const planetaryData = {
-        moon: {
-          name: 'Moon',
-          gravityLabel: 'Moon gravity',
-          gravity: '1.62 m/s²',
-          gravityShort: '1.62',
-          barWidth: '24%',
-          structure: {
-            earth: [
-              { k: 'Temp', v: '15 °C avg' },
-              { k: 'Pressure', v: '101.3 kPa' },
-              { k: 'Day', v: '24 h' }
-            ],
-            target: [
-              { k: 'Temp', v: '-173...127 °C' },
-              { k: 'Pressure', v: '≈ 0 (trace)' },
-              { k: 'Day', v: '29.5 days' }
-            ]
-          },
-          composition: {
-            earth: [
-              { k: 'Silica', v: '59.1% SiO₂' },
-              { k: 'Alumina', v: '15.2% Al₂O₃' },
-              { k: 'Iron Oxide', v: '6.8% FeO' }
-            ],
-            target: [
-              { k: 'Silica', v: '45.5% SiO₂' },
-              { k: 'Alumina', v: '24.0% Al₂O₃' },
-              { k: 'Iron Oxide', v: '6.0% FeO' }
-            ]
-          }
-        },
-        mars: {
-          name: 'Mars',
-          gravityLabel: 'Mars gravity',
-          gravity: '3.72 m/s²',
-          gravityShort: '3.72',
-          barWidth: '42%',
-          structure: {
-            earth: [
-              { k: 'Temp', v: '15 °C avg' },
-              { k: 'Pressure', v: '101.3 kPa' },
-              { k: 'Day', v: '24 h' }
-            ],
-            target: [
-              { k: 'Temp', v: '-63 °C avg' },
-              { k: 'Pressure', v: '0.61 kPa' },
-              { k: 'Day', v: '24h 37m' }
-            ]
-          },
-          composition: {
-            earth: [
-              { k: 'Silica', v: '59.1% SiO₂' },
-              { k: 'Alumina', v: '15.2% Al₂O₃' },
-              { k: 'Iron Oxide', v: '6.8% FeO' }
-            ],
-            target: [
-              { k: 'Silica', v: '43.8% SiO₂' },
-              { k: 'Iron Oxide', v: '18.2% Fe₂O₃' },
-              { k: 'Perchlorate', v: '0.6% ClO₄⁻' }
-            ]
-          }
-        }
-      };
-
-      let selectedTarget = 'moon';
-      let selectedView = 'structure';
-
-      const cardMoon = document.getElementById('card-moon');
-      const cardMars = document.getElementById('card-mars');
-      const cardAll = document.getElementById('card-all');
-      const viewPills = document.querySelectorAll('.view-pill');
-
-      function updateComparisonUI() {
-        const data = planetaryData[selectedTarget];
-
-        document.getElementById('left-target-gravity').innerHTML = `${data.gravityShort}<span class="unit">m/s²</span>`;
-        document.getElementById('left-target-label').textContent = data.gravityLabel;
-
-        document.getElementById('target-planet-name').textContent = data.name;
-        document.getElementById('target-val-1').textContent = data.gravity;
-        document.getElementById('target-bar-fill').style.width = data.barWidth;
-
-        const earthRows = data[selectedView].earth;
-        const targetRows = data[selectedView].target;
-
-        earthRows.forEach((row, idx) => {
-          document.getElementById(`earth-key-${idx + 2}`).textContent = row.k;
-          document.getElementById(`earth-val-${idx + 2}`).textContent = row.v;
-        });
-
-        targetRows.forEach((row, idx) => {
-          document.getElementById(`target-key-${idx + 2}`).textContent = row.k;
-          document.getElementById(`target-val-${idx + 2}`).textContent = row.v;
-        });
-      }
-
-      /* =========================================================
-         4. ROUTE DEFINITIONS & CARD NAVIGATION HANDLERS
-         ========================================================= */
-      const missionRoutes = {
-        moon: ['main2.html', 'main4.html', 'main6.html', 'main7.html'],
-        mars: ['mainmars.html', 'main4.html', 'main9.html', 'main7.html'],
-        all: ['main4.html']
-      };
-
-      function startMissionRoute(target) {
-        const route = missionRoutes[target];
-        sessionStorage.setItem('lunarse_target', target);
-        sessionStorage.setItem('active_card', `card-${target}`);
-        sessionStorage.setItem('lunarse_route', JSON.stringify(route));
-        sessionStorage.setItem('lunarse_step_index', '0');
-        window.location.href = route[0];
-      }
-
-      cardMoon.addEventListener('click', () => {
-        cardMoon.classList.add('selected');
-        cardMars.classList.remove('selected');
-        cardAll.classList.remove('selected');
-        selectedTarget = 'moon';
-        updateComparisonUI();
-        startMissionRoute('moon');
-      });
-
-      cardMars.addEventListener('click', () => {
-        cardMars.classList.add('selected');
-        cardMoon.classList.remove('selected');
-        cardAll.classList.remove('selected');
-        selectedTarget = 'mars';
-        updateComparisonUI();
-        startMissionRoute('mars');
-      });
-
-      cardAll.addEventListener('click', () => {
-        cardAll.classList.add('selected');
-        cardMoon.classList.remove('selected');
-        cardMars.classList.remove('selected');
-        startMissionRoute('all');
-      });
-
-      viewPills.forEach((pill) => {
-        pill.addEventListener('click', () => {
-          viewPills.forEach((p) => p.classList.remove('active'));
-          pill.classList.add('active');
-          selectedView = pill.dataset.view;
-          updateComparisonUI();
-        });
-      });
-
-      /* =========================================================
-         5. STEPPER & PREV NAVIGATIONAL REDIRECTS
-         ========================================================= */
-      const btnPrev = document.getElementById('btn-prev');
-      if (btnPrev) {
-        btnPrev.addEventListener('click', () => {
-          window.location.href = 'main.html';
-        });
-      }
-
-      updateComparisonUI();
-    });
-    const planetaryData = {
-  "moon": {
-    missionType: "Lunar Exploration",
-    gravity: "1.62 m/s²",
-    atmosphere: "Trace (Vacuum equivalent)",
-    analogs: [
-      {
-        id: "eastern-desert",
-        name: "Eastern Desert, Egypt",
-        coordinates: "26° N, 33° E",
-        similarity: "99.8%",
-        terrain: "Hyper-arid, fractured granite & alluvial outwash",
-        matchReason: "Dry weathering and rocky regolith-like surfaces",
-        parameters: { thermalGradient: "35.9 mW/m²", soilShear: "14.2 kPa", albedo: "0.28 Nominal" }
-      },
-      {
-        id: "mauna-kea",
-        name: "Mauna Kea, Hawaii",
-        coordinates: "19.8° N, 155.5° W",
-        similarity: "94.2%",
-        terrain: "Basaltic scoria, cinder cones, high UV",
-        matchReason: "Volcanic glass and sharp unweathered fragments",
-        parameters: { thermalGradient: "28.4 mW/m²", soilShear: "11.0 kPa", albedo: "0.15 Low" }
-      },
-      {
-        id: "atacama",
-        name: "Atacama Desert, Chile",
-        coordinates: "23.7° S, 69.1° W",
-        similarity: "82.5%",
-        terrain: "Salt pan crust, near-zero moisture",
-        matchReason: "Extreme desiccated crust and evaporite minerals",
-        parameters: { thermalGradient: "41.2 mW/m²", soilShear: "18.5 kPa", albedo: "0.40 High" }
-      }
-    ]
-  },
-  "mars": {
-    missionType: "Mars Exploration",
-    gravity: "3.72 m/s²",
-    atmosphere: "95% CO2 (600 Pa)",
-    analogs: [
-      {
-        id: "mdrs-utah",
-        name: "San Rafael Swell / MDRS, Utah",
-        coordinates: "38.4° N, 110.7° W",
-        similarity: "98.5%",
-        terrain: "Iron-oxide rich red mudstones & badlands",
-        matchReason: "Analogue for ancient lacustrine sedimentary deposition",
-        parameters: { thermalGradient: "29.1 mW/m²", soilShear: "12.8 kPa", albedo: "0.22 Nominal" }
-      },
-      {
-        id: "rio-tinto",
-        name: "Rio Tinto, Spain",
-        coordinates: "37.7° N, 6.5° W",
-        similarity: "95.1%",
-        terrain: "Acidic channels, ferric iron crusts",
-        matchReason: "High concentration of jarosite and hematite signatures",
-        parameters: { thermalGradient: "31.5 mW/m²", soilShear: "9.4 kPa", albedo: "0.18 Low" }
-      },
-      {
-        id: "mcmurdo",
-        name: "McMurdo Dry Valleys, Antarctica",
-        coordinates: "77.5° S, 161.8° E",
-        similarity: "91.4%",
-        terrain: "Polar desert, permafrost, ventifacts",
-        matchReason: "Cold-arid wind abrasion and subsurface ice stability",
-        parameters: { thermalGradient: "19.2 mW/m²", soilShear: "22.1 kPa", albedo: "0.35 Moderate" }
-      }
-    ]
-  }
-};
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUNARSE X | Deep Space Logistics & Planetary Analogs</title>
     
-  </script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Press Start 2P & VT323 (Pixel Fonts) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        orbitron: ['"Press Start 2P"', 'monospace'],
+                        rajdhani: ['"VT323"', 'monospace'],
+                    },
+                    colors: {
+                        space: {
+                            950: '#020617',
+                            900: '#0f172a',
+                            800: '#1e293b',
+                        },
+                        accent: {
+                            orange: '#f97316',
+                            glow: '#fb923c',
+                            cyan: '#38bdf8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #020617;
+            color: #f8fafc;
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            overflow-x: hidden;
+            margin: 0;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: grayscale;
+            font-smooth: never;
+        }
+
+        .font-orbitron {
+            line-height: 1.45;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+            border-left: 1px solid rgba(249, 115, 22, 0.15);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #f97316, #9a3412);
+            border-radius: 0px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #fb923c;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-panel-orange {
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(249, 115, 22, 0.45);
+            box-shadow: 0 0 25px rgba(249, 115, 22, 0.18), inset 0 0 15px rgba(249, 115, 22, 0.06);
+        }
+
+        .cyber-corners {
+            position: relative;
+        }
+        .cyber-corners::before, .cyber-corners::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-color: #f97316;
+            border-style: solid;
+            pointer-events: none;
+        }
+        .cyber-corners::before {
+            top: -1px;
+            left: -1px;
+            border-width: 2px 0 0 2px;
+        }
+        .cyber-corners::after {
+            bottom: -1px;
+            right: -1px;
+            border-width: 0 2px 2px 0;
+        }
+
+        .text-glow-orange {
+            text-shadow: 0 0 20px rgba(249, 115, 22, 0.6);
+        }
+        
+        .btn-cyber-primary {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.45);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-cyber-primary:hover {
+            box-shadow: 0 0 32px rgba(249, 115, 22, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .hud-grid {
+            background-image: 
+                linear-gradient(to right, rgba(249, 115, 22, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(249, 115, 22, 0.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: auto;
+        }
+
+        .planet-pill.active {
+            background: rgba(249, 115, 22, 0.25);
+            border-color: #f97316;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
+        }
+    </style>
+</head>
+<body class="selection:bg-orange-500 selection:text-white">
+
+    <!-- Fixed 3D WebGL Background Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Subtle Ambient Grid Overlay -->
+    <div class="fixed inset-0 hud-grid pointer-events-none z-0"></div>
+
+    <!-- Floating Reset Orbit / Zoom Out Button (Appears when zoomed/clicked) -->
+    <button id="reset-orbit-btn" onclick="resetCameraOrbit()" title="Zoom Out & Reset View" 
+        class="fixed bottom-6 left-6 z-30 hidden px-4 py-3 rounded-lg glass-panel-orange border border-orange-500/60 font-orbitron text-[10px] text-orange-400 hover:text-white transition-all flex items-center gap-2 cursor-pointer shadow-lg">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>RESET ORBIT / ZOOM OUT</span>
+    </button>
+
+    <!-- Navigation Header -->
+    <header class="fixed top-0 left-0 right-0 z-40 px-4 sm:px-8 py-4 transition-all duration-300" id="main-header">
+        <div class="max-w-7xl mx-auto glass-panel rounded-xl px-5 py-3 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3 group" onclick="playClickSound()">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-700 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-satellite text-white text-lg"></i>
+                </div>
+                <div>
+                    <div class="font-orbitron text-base sm:text-lg tracking-wider text-white flex items-center gap-1">
+                        LUNARSE <span class="text-orange-500 text-glow-orange">X</span>
+                    </div>
+                    <div class="text-[8px] sm:text-[9px] font-orbitron tracking-[0.15em] text-slate-400 uppercase mt-0.5">
+                        Deep Space Logistics
+                    </div>
+                </div>
+            </a>
+
+            <nav class="hidden md:flex items-center gap-6 text-[10px] font-orbitron tracking-wider text-slate-300">
+                <a href="#hero" class="hover:text-orange-400 transition-colors">ORBITAL VIEW</a>
+                <a href="#mission" class="hover:text-orange-400 transition-colors">THE MISSION</a>
+                <a href="#platform-guide" class="hover:text-orange-400 transition-colors">PLATFORM EXPERIENCE</a>
+                <button onclick="openMissionModal('PAYLOAD MANIFEST')" class="hover:text-orange-400 transition-colors uppercase cursor-pointer">TELEMETRY</button>
+            </nav>
+
+            <div class="flex items-center gap-3 sm:gap-4">
+                <div class="hidden sm:flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-slate-700/70">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span class="font-orbitron text-[9px] tracking-wider text-emerald-400">ORBITAL LINK: NOMINAL</span>
+                </div>
+
+                <button id="sound-toggle" onclick="toggleAudio()" title="Toggle Ambient Telemetry Audio"
+                    class="w-10 h-10 rounded-lg glass-panel hover:border-orange-500/60 flex items-center justify-center text-slate-300 hover:text-orange-400 transition-all cursor-pointer">
+                    <i id="sound-icon" class="fa-solid fa-volume-xmark text-base"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Floating Telemetry Inspection Card -->
+    <aside id="telemetry-card" class="fixed top-24 right-4 sm:right-8 z-30 w-80 sm:w-96 glass-panel-orange cyber-corners rounded-xl p-4 transition-all duration-300 transform translate-x-8 opacity-0 pointer-events-none">
+        <div class="flex items-center justify-between border-b border-orange-500/25 pb-2.5 mb-3">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-crosshairs text-orange-500 animate-spin" style="animation-duration: 10s;"></i>
+                <span class="font-orbitron text-[9px] tracking-wider text-orange-400">PLANETARY TELEMETRY</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="telemetry-code" class="text-[8px] font-orbitron px-2 py-0.5 rounded bg-orange-500/20 text-orange-300 border border-orange-500/30">SOL-03</span>
+                <button onclick="hideTelemetryCard()" title="Close Telemetry Card" class="w-6 h-6 rounded bg-slate-900/80 border border-slate-700 text-slate-400 hover:text-orange-400 hover:border-orange-500 flex items-center justify-center text-xs transition-colors cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-baseline justify-between mb-1">
+            <h3 id="telemetry-name" class="font-orbitron text-sm font-bold text-white tracking-wider">EARTH</h3>
+            <span id="telemetry-type" class="text-base font-semibold uppercase tracking-widest text-sky-400">Baseline Biosphere</span>
+        </div>
+        <p id="telemetry-desc" class="text-base text-slate-300 leading-snug mb-3.5">
+            Primary logistics hub & extreme terrestrial analog proving ground for off-world hardware validation.
+        </p>
+
+        <div class="grid grid-cols-2 gap-2 mb-3">
+            <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-2">
+                <div class="text-[8px] font-orbitron text-slate-400 uppercase">Surface Gravity</div>
+                <div id="telemetry-gravity" class="font-orbitron text-[10px] text-white mt-1">9.807 m/s²</div>
+            </div>
+            <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-2">
+                <div class="text-[8px] font-orbitron text-slate-400 uppercase">Mean Temp</div>
+                <div id="telemetry-temp" class="font-orbitron text-[10px] text-orange-400 mt-1">+15.0 °C</div>
+            </div>
+            <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-2">
+                <div class="text-[8px] font-orbitron text-slate-400 uppercase">Atmosphere</div>
+                <div id="telemetry-atmo" class="text-base text-slate-200 mt-0.5">101.3 kPa (N₂/O₂)</div>
+            </div>
+            <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-2">
+                <div class="text-[8px] font-orbitron text-slate-400 uppercase">Transit Window</div>
+                <div id="telemetry-transit" class="text-base text-emerald-400 mt-0.5">LEO: 8.5 MIN</div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-sm text-slate-400">
+            <span><i class="fa-solid fa-satellite-dish text-orange-500 mr-1"></i> Target Locked</span>
+            <button onclick="openMissionModal(document.getElementById('telemetry-name').innerText)" class="font-orbitron text-[10px] text-orange-400 hover:text-orange-300 underline underline-offset-4 cursor-pointer">
+                DEPLOY &rarr;
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Scrollable Content -->
+    <main class="relative z-10 pointer-events-none">
+        
+        <!-- HERO SECTION -->
+        <section id="hero" class="min-h-screen max-w-7xl mx-auto px-4 sm:px-8 pt-32 pb-16 flex flex-col justify-between">
+            <div class="max-w-3xl pointer-events-auto mt-6 sm:mt-12">
+                <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass-panel border-orange-500/30 mb-6">
+                    <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                    <span class="font-orbitron text-[9px] sm:text-[10px] tracking-[0.12em] text-orange-400 uppercase">
+                        Next-Gen Interplanetary Analog & Cargo Network
+                    </span>
+                </div>
+
+                <h1 class="font-orbitron text-2xl sm:text-4xl lg:text-5xl leading-[1.35] tracking-tight text-white mb-6">
+                    EXPLORE <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-emerald-400">EARTH.</span><br>
+                    DISCOVER <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 text-glow-orange">OTHER WORLDS.</span>
+                </h1>
+
+                <p class="text-xl sm:text-2xl text-slate-300 leading-snug mb-8 max-w-xl bg-slate-950/40 backdrop-blur-sm p-4 rounded-xl border-l-2 border-orange-500">
+                    Bridging terrestrial extreme environments with cislunar and Martian logistics. Validate autonomous rovers, habitat modules, and life-support payloads before launch.
+                </p>
+
+                <div class="flex flex-wrap items-center gap-4 mb-10">
+                    <a href="#mission" onclick="playClickSound()" class="glass-panel hover:border-orange-500/60 hover:bg-slate-900/80 px-6 py-4 rounded-lg font-orbitron text-[10px] sm:text-xs tracking-wider text-slate-200 hover:text-white transition-all flex items-center gap-3">
+                        <i class="fa-solid fa-compass text-orange-500"></i>
+                        EXPLORE THE MISSION
+                    </a>
+                </div>
+
+                <div class="space-y-2.5">
+                    <div class="font-orbitron text-[9px] tracking-[0.15em] text-slate-400 uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-globe text-orange-500"></i> Click a 3D Planet or Select Below to Inspect
+                    </div>
+                    <div class="inline-flex flex-wrap gap-2.5 p-1.5 glass-panel rounded-xl">
+                        <button onclick="selectPlanet('moon', true)" id="pill-moon" class="planet-pill px-4 py-2.5 rounded-lg border border-transparent font-orbitron text-[10px] tracking-wider text-slate-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> MOON (LUNA)
+                        </button>
+                        <button onclick="selectPlanet('earth', true)" id="pill-earth" class="planet-pill px-4 py-2.5 rounded-lg border border-transparent font-orbitron text-[10px] tracking-wider text-slate-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span> EARTH
+                        </button>
+                        <button onclick="selectPlanet('mars', true)" id="pill-mars" class="planet-pill px-4 py-2.5 rounded-lg border border-transparent font-orbitron text-[10px] tracking-wider text-slate-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> MARS
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hidden sm:flex items-center gap-3 text-slate-400 font-orbitron text-[9px] tracking-widest mt-12 pointer-events-auto">
+                <a href="#mission" class="flex items-center gap-3 hover:text-orange-400 transition-colors">
+                    <span class="w-6 h-10 rounded-full border border-slate-600 flex justify-center pt-2">
+                        <span class="w-1 h-2 bg-orange-500 rounded-full animate-bounce"></span>
+                    </span>
+                    SCROLL TO ANALOG COMPARISON MATRIX
+                </a>
+            </div>
+        </section>
+
+        <!-- "THE MISSION" SECTION -->
+        <section id="mission" class="relative py-24 px-4 sm:px-8 max-w-7xl mx-auto pointer-events-auto">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-orbitron text-[10px] tracking-[0.2em] uppercase mb-4">
+                    <i class="fa-solid fa-layer-group"></i> THE MISSION
+                </div>
+                <h2 class="font-orbitron text-xl sm:text-3xl text-white tracking-tight mb-4">
+                    Compare. <span class="text-orange-500">Match.</span> Prepare.
+                </h2>
+                <p class="text-slate-300 text-xl leading-snug">
+                    Every off-world logistics corridor begins in Earth's harshest analog terrains. LUNARSE X maps terrestrial testbeds directly to Lunar and Martian surface profiles to eliminate mission risk.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- Card 1: Earth Analogs -->
+                <div class="glass-panel cyber-corners rounded-2xl p-7 flex flex-col justify-between hover:border-sky-400/50 transition-all duration-300 group hover:-translate-y-1.5">
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-14 h-14 rounded-xl bg-sky-500/15 border border-sky-400/30 flex items-center justify-center text-sky-400 text-2xl group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-earth-americas"></i>
+                            </div>
+                            <span class="font-orbitron text-[8px] px-3 py-1.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                PHASE 01 // COMPARE
+                            </span>
+                        </div>
+
+                        <h3 class="font-orbitron text-base text-white mb-2 group-hover:text-sky-400 transition-colors">
+                            EARTH ANALOGS
+                        </h3>
+                        <p class="text-[10px] font-orbitron tracking-wider text-sky-400/90 uppercase mb-4">
+                            Terrestrial Proving Grounds
+                        </p>
+                        <p class="text-slate-300 text-lg leading-snug mb-6">
+                            Simulate regolith abrasion, cryogenic thermal swings, and high-latency comms across Atacama basalt flats, Icelandic lava tubes, and Devon Island craters.
+                        </p>
+
+                        <ul class="space-y-3 text-lg text-slate-300 border-t border-slate-800 pt-5 mb-6">
+                            <li class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-sky-400 text-sm"></i>
+                                <span>1G Full-Scale Payload Integration</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-sky-400 text-sm"></i>
+                                <span>Volcanic Basalt & Silica Simulants</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-sky-400 text-sm"></i>
+                                <span>Real-Time Telemetry Calibration</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button onclick="selectPlanet('earth', true); window.scrollTo({top: 0, behavior: 'smooth'});" class="w-full py-3.5 rounded-lg bg-slate-900/90 hover:bg-sky-500/20 border border-slate-700 hover:border-sky-400/50 font-orbitron text-[10px] tracking-wider text-sky-400 transition-all cursor-pointer">
+                        INSPECT EARTH ORBIT &rarr;
+                    </button>
+                </div>
+
+                <!-- Card 2: The Moon -->
+                <div class="glass-panel cyber-corners rounded-2xl p-7 flex flex-col justify-between hover:border-slate-300/60 transition-all duration-300 group hover:-translate-y-1.5">
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-14 h-14 rounded-xl bg-slate-400/15 border border-slate-400/30 flex items-center justify-center text-slate-200 text-2xl group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-moon"></i>
+                            </div>
+                            <span class="font-orbitron text-[8px] px-3 py-1.5 rounded-full bg-slate-400/10 text-slate-300 border border-slate-400/25">
+                                PHASE 02 // MATCH
+                            </span>
+                        </div>
+
+                        <h3 class="font-orbitron text-base text-white mb-2 group-hover:text-slate-200 transition-colors">
+                            THE MOON (LUNA)
+                        </h3>
+                        <p class="text-[10px] font-orbitron tracking-wider text-slate-400 uppercase mb-4">
+                            Cislunar Gateway & South Pole
+                        </p>
+                        <p class="text-slate-300 text-lg leading-snug mb-6">
+                            Precision cargo delivery to Shackleton Crater rim. Engineered for 1/6th gravity dynamics, electrostatic lunar dust mitigation, and 14-day cryogenic lunar nights.
+                        </p>
+
+                        <ul class="space-y-3 text-lg text-slate-300 border-t border-slate-800 pt-5 mb-6">
+                            <li class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-slate-300 text-sm"></i>
+                                <span>3-Day Cislunar Express Corridor</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-slate-300 text-sm"></i>
+                                <span>ISRU Water-Ice Extraction Readiness</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-slate-300 text-sm"></i>
+                                <span>1.3s Low-Latency Teleoperation</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button onclick="selectPlanet('moon', true); window.scrollTo({top: 0, behavior: 'smooth'});" class="w-full py-3.5 rounded-lg bg-slate-900/90 hover:bg-slate-400/20 border border-slate-700 hover:border-slate-300/60 font-orbitron text-[10px] tracking-wider text-slate-200 transition-all cursor-pointer">
+                        INSPECT LUNAR ORBIT &rarr;
+                    </button>
+                </div>
+
+                <!-- Card 3: Mars -->
+                <div class="glass-panel-orange cyber-corners rounded-2xl p-7 flex flex-col justify-between hover:border-orange-500 transition-all duration-300 group hover:-translate-y-1.5">
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-14 h-14 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-500 text-2xl group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-meteor"></i>
+                            </div>
+                            <span class="font-orbitron text-[8px] px-3 py-1.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/35">
+                                PHASE 03 // PREPARE
+                            </span>
+                        </div>
+
+                        <h3 class="font-orbitron text-base text-white mb-2 group-hover:text-orange-400 transition-colors">
+                            MARS
+                        </h3>
+                        <p class="text-[10px] font-orbitron tracking-wider text-orange-400 uppercase mb-4">
+                            Deep Space Frontier Logistics
+                        </p>
+                        <p class="text-slate-300 text-lg leading-snug mb-6">
+                            Heavy autonomous freight architecture for Jezero and Arcadia Planitia. Built to endure 38% gravity, global dust storms, and 22-minute light-time communication delays.
+                        </p>
+
+                        <ul class="space-y-3 text-lg text-slate-300 border-t border-orange-500/20 pt-5 mb-6">
+                            <li class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-orange-500 text-sm"></i>
+                                <span>Autonomous AI Hazard Navigation</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-orange-500 text-sm"></i>
+                                <span>CO₂-to-Propellant Sabatier Cargo</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-check text-orange-500 text-sm"></i>
+                                <span>Radiation-Hardened Habitat Shells</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button onclick="selectPlanet('mars', true); window.scrollTo({top: 0, behavior: 'smooth'});" class="w-full py-3.5 rounded-lg bg-orange-500/20 hover:bg-orange-500 border border-orange-500/50 font-orbitron text-[10px] tracking-wider text-orange-300 hover:text-white transition-all cursor-pointer">
+                        INSPECT MARTIAN ORBIT &rarr;
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- PLATFORM EXPERIENCE & USER JOURNEY SECTION -->
+        <section id="platform-guide" class="relative py-24 px-4 sm:px-8 max-w-7xl mx-auto pointer-events-auto border-t border-slate-800/80">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-orbitron text-[10px] tracking-[0.2em] uppercase mb-4">
+                    <i class="fa-solid fa-route"></i> PLATFORM WORKFLOW
+                </div>
+                <h2 class="font-orbitron text-xl sm:text-3xl text-white tracking-tight mb-4">
+                    From Data to <span class="text-orange-500">Discovery</span>
+                </h2>
+                <p class="text-slate-300 text-xl leading-snug">
+                    An interactive user experience where you can find Earth analogs for Earth-Moon and Earth-Mars corridors, live the experience firsthand, analyze via 3D/2D maps, and review your final report.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+                
+                <div class="md:col-span-2 glass-panel cyber-corners rounded-2xl p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-orbitron text-[9px] px-3 py-1 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">01 // SELECT CORRIDOR</span>
+                            <i class="fa-solid fa-globe text-orange-500 text-xl"></i>
+                        </div>
+                        <h3 class="font-orbitron text-lg text-white mb-2">Choose Your Mission Target</h3>
+                        <p class="text-slate-300 text-lg leading-relaxed mb-6">
+                            Decide whether your simulation focuses on <strong>Earth-Moon</strong> or <strong>Earth-Mars</strong> operations. Select target regions, configure mission parameters, and choose your specific payload profile.
+                        </p>
+                    </div>
+                    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex items-center justify-between text-slate-400 text-base font-orbitron">
+                        <span>CORRIDOR: EARTH &harr; LUNA / MARS</span>
+                        <span class="text-emerald-400">STATUS: READY</span>
+                    </div>
+                </div>
+
+                <div class="glass-panel cyber-corners rounded-2xl p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-orbitron text-[9px] px-3 py-1 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">02 // FIND ANALOGS</span>
+                            <i class="fa-solid fa-magnifying-glass-location text-sky-400 text-xl"></i>
+                        </div>
+                        <h3 class="font-orbitron text-base text-white mb-2">Earth Analog Finder</h3>
+                        <p class="text-slate-300 text-base leading-relaxed">
+                            Discover the closest matching terrestrial locations on Earth that mirror extraterrestrial terrain characteristics.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-panel cyber-corners rounded-2xl p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-orbitron text-[9px] px-3 py-1 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">03 // 3D / 2D MAPPING</span>
+                            <i class="fa-solid fa-cube text-purple-400 text-xl"></i>
+                        </div>
+                        <h3 class="font-orbitron text-base text-white mb-2">Deep Site Analysis</h3>
+                        <p class="text-slate-300 text-base leading-relaxed">
+                            Explore planetary surfaces using immersive 3D simulations and detailed 2D geospatial maps to understand terrain similarity.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 glass-panel-orange cyber-corners rounded-2xl p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-orbitron text-[9px] px-3 py-1 rounded bg-orange-500/20 text-orange-300 border border-orange-500/40">04 // MISSION REPORT</span>
+                            <i class="fa-solid fa-file-contract text-orange-400 text-xl"></i>
+                        </div>
+                        <h3 class="font-orbitron text-lg text-white mb-2">Interactive Mission Planner & Final Report</h3>
+                        <p class="text-slate-300 text-lg leading-relaxed">
+                            Plan objectives, review findings, and compile your comprehensive final mission report for flight operations.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- "WHY IT MATTERS" & MISSION DETAILS SECTION -->
+        <section id="mission-details" class="relative py-24 px-4 sm:px-8 max-w-7xl mx-auto pointer-events-auto border-t border-slate-800/80">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-orbitron text-[10px] tracking-[0.2em] uppercase mb-4">
+                    <i class="fa-solid fa-bullseye"></i> 5. Why It Matters
+                </div>
+                <h2 class="font-orbitron text-xl sm:text-3xl text-white tracking-tight mb-4">
+                    Beyond Exploration. <span class="text-orange-500">Towards Preparation.</span>
+                </h2>
+                <p class="text-slate-300 text-xl leading-snug">
+                    A short section explaining project value and impact.
+                </p>
+            </div>
+
+            <div class="glass-panel-orange cyber-corners rounded-2xl p-8 sm:p-12 mb-12 max-w-4xl mx-auto">
+                <ul class="space-y-6 text-xl text-slate-200">
+                    <li class="flex items-start gap-4">
+                        <span class="w-3 h-3 rounded-full bg-orange-500 mt-2 shrink-0 animate-pulse"></span>
+                        <div>
+                            <strong class="font-orbitron text-white text-base">Smarter Training:</strong> Prepare astronauts using real Earth environments.
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-4">
+                        <span class="w-3 h-3 rounded-full bg-orange-500 mt-2 shrink-0 animate-pulse"></span>
+                        <div>
+                            <strong class="font-orbitron text-white text-base">Data-Driven Decisions:</strong> Support site evaluation through scientific analysis.
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-4">
+                        <span class="w-3 h-3 rounded-full bg-orange-500 mt-2 shrink-0 animate-pulse"></span>
+                        <div>
+                            <strong class="font-orbitron text-white text-base">Future Missions:</strong> Help bridge the gap between Earth research and planetary exploration.
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap items-center justify-center gap-6">
+                <a href="main3.html" class="btn-cyber-primary px-8 py-4 rounded-lg font-orbitron font-bold text-sm tracking-wider inline-flex items-center space-x-3 text-white transition duration-300 shadow-lg shadow-orange-500/30">
+                    <i class="fa-solid fa-rocket"></i>
+                    <span>Start Your Mission</span>
+                </a>
+                <a href="analogs.html" class="glass-panel hover:border-orange-500/60 hover:bg-slate-900/80 px-8 py-4 rounded-lg font-orbitron text-xs tracking-wider text-slate-200 hover:text-white transition-all inline-flex items-center space-x-3">
+                    <i class="fa-solid fa-compass text-orange-500"></i>
+                    <span>Explore Our Analogs</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Minimal Footer -->
+        <footer class="border-t border-slate-800/80 py-8 px-4 sm:px-8 max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-[9px] text-slate-500 font-orbitron tracking-wider pointer-events-auto gap-4">
+            <div>&copy; 2026 LUNARSE X AEROSPACE LOGISTICS. ALL SYSTEMS NOMINAL.</div>
+            <div class="flex items-center gap-6">
+                <span class="text-slate-400">LAT: 28.5729° N // LON: 80.6490° W</span>
+                <span class="text-orange-500">V.4.08-ORBITAL</span>
+            </div>
+        </footer>
+    </main>
+
+    <!-- INTERACTIVE MISSION LAUNCH MODAL -->
+    <div id="mission-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-opacity">
+        <div class="glass-panel-orange cyber-corners rounded-2xl max-w-lg w-full p-6 sm:p-8 relative">
+            <button onclick="closeMissionModal()" class="absolute top-5 right-5 w-9 h-9 rounded-lg bg-slate-900/80 border border-slate-700 text-slate-400 hover:text-orange-400 hover:border-orange-500 flex items-center justify-center transition-colors cursor-pointer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping"></span>
+                <span id="modal-tag" class="font-orbitron text-[9px] tracking-[0.15em] text-orange-400 uppercase">MISSION UPLINK</span>
+            </div>
+            <h3 class="font-orbitron text-base sm:text-lg text-white mb-2">DISPATCH MISSION TELEMETRY</h3>
+            <p class="text-lg text-slate-300 mb-6 leading-snug">
+                Configure your target celestial corridor and payload parameters to receive an orbital trajectory brief.
+            </p>
+
+            <form id="mission-form" onsubmit="handleMissionSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block font-orbitron text-[9px] tracking-widest text-slate-400 uppercase mb-1.5">Target Destination</label>
+                    <select id="modal-destination" class="w-full bg-slate-950/90 border border-slate-700 focus:border-orange-500 rounded-lg px-4 py-2.5 text-white font-rajdhani text-xl outline-none">
+                        <option value="EARTH ANALOG TESTBED">EARTH — Terrestrial Analog Proving Ground</option>
+                        <option value="MOON (SHACKLETON RIM)">MOON (LUNA) — Cislunar South Pole Corridor</option>
+                        <option value="MARS (JEZERO BASIN)">MARS — Deep Space Cargo Transfer</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-orbitron text-[9px] tracking-widest text-slate-400 uppercase mb-1.5">Payload Mass (kg)</label>
+                        <input type="number" value="450" min="1" max="50000" required class="w-full bg-slate-950/90 border border-slate-700 focus:border-orange-500 rounded-lg px-4 py-2.5 text-white font-orbitron text-xs outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-orbitron text-[9px] tracking-widest text-slate-400 uppercase mb-1.5">Mission Class</label>
+                        <select class="w-full bg-slate-950/90 border border-slate-700 focus:border-orange-500 rounded-lg px-4 py-2.5 text-white font-rajdhani text-xl outline-none">
+                            <option>Autonomous Rover</option>
+                            <option>Habitat Life-Support</option>
+                            <option>ISRU Refinery Node</option>
+                            <option>Orbital Relay Sat</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-orbitron text-[9px] tracking-widest text-slate-400 uppercase mb-1.5">Commander / Organization Email</label>
+                    <input type="email" placeholder="commander@aerospace.org" required class="w-full bg-slate-950/90 border border-slate-700 focus:border-orange-500 rounded-lg px-4 py-2.5 text-white font-rajdhani text-xl outline-none">
+                </div>
+
+                <div id="modal-feedback" class="hidden p-3.5 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-lg flex items-center gap-3">
+                    <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+                    <span>Telemetry manifest locked! Flight director packet transmitted.</span>
+                </div>
+
+                <div class="pt-2 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeMissionModal()" class="px-5 py-3 rounded-lg border border-slate-700 text-slate-300 hover:text-white font-orbitron text-[10px] tracking-wider cursor-pointer">
+                        ABORT
+                    </button>
+                    <button type="submit" class="btn-cyber-primary px-6 py-3 rounded-lg font-orbitron text-[10px] tracking-wider text-white cursor-pointer">
+                        TRANSMIT MANIFEST
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- THREE.JS 3D PLANET ENGINE & INTERACTIVE LOGIC -->
+    <script>
+        let audioCtx = null;
+        let isSoundEnabled = false;
+        let ambientOsc = null;
+        let ambientGain = null;
+
+        function toggleAudio() {
+            const icon = document.getElementById('sound-icon');
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            if (!isSoundEnabled) {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                ambientOsc = audioCtx.createOscillator();
+                ambientGain = audioCtx.createGain();
+                ambientOsc.type = 'sine';
+                ambientOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+                ambientGain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+                
+                ambientOsc.connect(ambientGain);
+                ambientGain.connect(audioCtx.destination);
+                ambientOsc.start();
+
+                isSoundEnabled = true;
+                icon.className = 'fa-solid fa-volume-high text-orange-400 text-base';
+                playBeep(660, 0.08);
+            } else {
+                if (ambientOsc) {
+                    ambientOsc.stop();
+                    ambientOsc.disconnect();
+                    ambientOsc = null;
+                }
+                isSoundEnabled = false;
+                icon.className = 'fa-solid fa-volume-xmark text-base';
+            }
+        }
+
+        function playBeep(freq = 520, duration = 0.06) {
+            if (!isSoundEnabled || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playClickSound() {
+            playBeep(740, 0.05);
+        }
+
+        const PLANET_DATA = {
+            earth: {
+                code: 'SOL-03',
+                name: 'EARTH',
+                type: 'Baseline Biosphere',
+                typeColor: 'text-sky-400',
+                desc: 'Primary logistics hub & extreme terrestrial analog proving ground for off-world hardware validation.',
+                gravity: '9.807 m/s²',
+                temp: '+15.0 °C',
+                atmo: '101.3 kPa (N₂/O₂)',
+                transit: 'LEO: 8.5 MIN'
+            },
+            moon: {
+                code: 'SOL-03A',
+                name: 'MOON (LUNA)',
+                type: 'Cislunar Satellite',
+                typeColor: 'text-slate-300',
+                desc: 'Tidal-locked basaltic world featuring permanently shadowed polar craters rich in water ice.',
+                gravity: '1.620 m/s²',
+                temp: '-53.0 °C (Avg)',
+                atmo: '10⁻¹⁰ Pa (Vacuum)',
+                transit: '72 HOURS'
+            },
+            mars: {
+                code: 'SOL-04',
+                name: 'MARS',
+                type: 'Terrestrial Frontier',
+                typeColor: 'text-orange-400',
+                desc: 'Iron-oxide desert world with ancient river deltas, polar ice caps, and thin CO₂ atmosphere.',
+                gravity: '3.721 m/s²',
+                temp: '-63.0 °C',
+                atmo: '0.636 kPa (95% CO₂)',
+                transit: '6–9 MONTHS'
+            }
+        };
+
+        function showTelemetryCard() {
+            const card = document.getElementById('telemetry-card');
+            card.classList.remove('opacity-0', 'translate-x-8', 'pointer-events-none');
+            card.classList.add('opacity-100', 'translate-x-0', 'pointer-events-auto');
+            
+            // Show reset orbit button when zoomed in/planet selected
+            document.getElementById('reset-orbit-btn').classList.remove('hidden');
+        }
+
+        function hideTelemetryCard() {
+            playBeep(400, 0.04);
+            const card = document.getElementById('telemetry-card');
+            card.classList.remove('opacity-100', 'translate-x-0', 'pointer-events-auto');
+            card.classList.add('opacity-0', 'translate-x-8', 'pointer-events-none');
+            
+            ['earth', 'moon', 'mars'].forEach(p => {
+                const pill = document.getElementById(`pill-${p}`);
+                if (pill) pill.classList.remove('active');
+            });
+        }
+
+        function resetCameraOrbit() {
+            playBeep(500, 0.06);
+            desiredCamPos = { x: 0, y: 0, z: 28 };
+            hideTelemetryCard();
+            document.getElementById('reset-orbit-btn').classList.add('hidden');
+        }
+
+        function updateTelemetryUI(key) {
+            const data = PLANET_DATA[key];
+            if (!data) return;
+
+            document.getElementById('telemetry-code').innerText = data.code;
+            document.getElementById('telemetry-name').innerText = data.name;
+            const typeEl = document.getElementById('telemetry-type');
+            typeEl.innerText = data.type;
+            typeEl.className = `text-base font-semibold uppercase tracking-widest ${data.typeColor}`;
+            document.getElementById('telemetry-desc').innerText = data.desc;
+            document.getElementById('telemetry-gravity').innerText = data.gravity;
+            document.getElementById('telemetry-temp').innerText = data.temp;
+            document.getElementById('telemetry-atmo').innerText = data.atmo;
+            document.getElementById('telemetry-transit').innerText = data.transit;
+
+            ['earth', 'moon', 'mars'].forEach(p => {
+                const pill = document.getElementById(`pill-${p}`);
+                if (pill) {
+                    if (p === key) pill.classList.add('active');
+                    else pill.classList.remove('active');
+                }
+            });
+
+            showTelemetryCard();
+        }
+
+        function createPixelTexture(width, height, drawFn, transparent = false) {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!transparent) {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, width, height);
+            }
+            drawFn(ctx, width, height);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.ClampToEdgeWrapping;
+            return texture;
+        }
+
+        const earthTexture = createPixelTexture(96, 48, (ctx, w, h) => {
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const wave = Math.sin(x * 0.3) * Math.cos(y * 0.3);
+                    ctx.fillStyle = wave > 0.2 ? '#0284c7' : '#0369a1';
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+
+            const continents = [
+                { cx: 22, cy: 18, rx: 11, ry: 9 },
+                { cx: 28, cy: 31, rx: 7, ry: 10 },
+                { cx: 54, cy: 16, rx: 14, ry: 8 },
+                { cx: 56, cy: 28, rx: 9, ry: 11 },
+                { cx: 78, cy: 33, rx: 8, ry: 6 }
+            ];
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    if (y < 4 || y > h - 5) {
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.fillRect(x, y, 1, 1);
+                        continue;
+                    }
+
+                    for (const c of continents) {
+                        const dx = (x - c.cx) / c.rx;
+                        const dy = (y - c.cy) / c.ry;
+                        const noise = Math.sin(x * 0.65) * 0.25 + Math.cos(y * 0.75) * 0.25;
+                        if (dx * dx + dy * dy + noise < 0.85) {
+                            const biome = Math.sin(x * 0.4 + y * 0.3);
+                            if (biome > 0.35) {
+                                ctx.fillStyle = '#d97706';
+                            } else if (biome > -0.2) {
+                                ctx.fillStyle = '#16a34a';
+                            } else {
+                                ctx.fillStyle = '#22c55e';
+                            }
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                }
+            }
+        });
+
+        const cloudTexture = createPixelTexture(96, 48, (ctx, w, h) => {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            for (let y = 4; y < h - 4; y++) {
+                for (let x = 0; x < w; x++) {
+                    const n = Math.sin(x * 0.45 + y * 0.2) + Math.cos(y * 0.6 - x * 0.15);
+                    if (n > 1.15) {
+                        ctx.fillRect(x, y, 1, 1);
+                    }
+                }
+            }
+        }, true);
+
+        const marsTexture = createPixelTexture(64, 32, (ctx, w, h) => {
+            const palette = ['#9a3412', '#c2410c', '#ea580c', '#7c2d12', '#b45309'];
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    if (y < 2 || y > h - 3) {
+                        ctx.fillStyle = '#fed7aa';
+                    } else {
+                        const idx = Math.abs(Math.floor((Math.sin(x * 0.5) + Math.cos(y * 0.6)) * 2.5)) % palette.length;
+                        ctx.fillStyle = palette[idx];
+                    }
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        });
+
+        const moonTexture = createPixelTexture(64, 32, (ctx, w, h) => {
+            const palette = ['#475569', '#64748b', '#94a3b8', '#334155', '#cbd5e1'];
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const idx = Math.abs(Math.floor((Math.sin(x * 0.7) * Math.cos(y * 0.7)) * 4)) % palette.length;
+                    ctx.fillStyle = palette[idx];
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const craters = [
+                { x: 14, y: 12, r: 4 },
+                { x: 32, y: 18, r: 5 },
+                { x: 48, y: 10, r: 3 },
+                { x: 22, y: 24, r: 3 }
+            ];
+            craters.forEach(c => {
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(c.x - c.r / 2, c.y - c.r / 2, c.r, c.r);
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.strokeRect(c.x - c.r / 2, c.y - c.r / 2, c.r, c.r);
+            });
+        });
+
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 0, 28);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0x334155, 1.35);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xfff7ed, 2.2);
+        sunLight.position.set(18, 12, 20);
+        scene.add(sunLight);
+
+        const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.85);
+        rimLight.position.set(-18, -10, -10);
+        scene.add(rimLight);
+
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 2600;
+        const starPositions = new Float32Array(starCount * 3);
+        const starColors = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount * 3; i += 3) {
+            const radius = 140 + Math.random() * 260;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos((Math.random() * 2) - 1);
+
+            starPositions[i] = radius * Math.sin(phi) * Math.cos(theta);
+            starPositions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            starPositions[i + 2] = radius * Math.cos(phi);
+
+            const tint = Math.random();
+            if (tint > 0.84) {
+                starColors[i] = 0.98; starColors[i + 1] = 0.58; starColors[i + 2] = 0.25;
+            } else if (tint > 0.64) {
+                starColors[i] = 0.55; starColors[i + 1] = 0.85; starColors[i + 2] = 1.0;
+            } else {
+                starColors[i] = 0.95; starColors[i + 1] = 0.96; starColors[i + 2] = 1.0;
+            }
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+        const starMat = new THREE.PointsMaterial({
+            size: 0.75,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.95,
+            depthWrite: false
+        });
+        const starField = new THREE.Points(starGeo, starMat);
+        starField.frustumCulled = false;
+        scene.add(starField);
+
+        const solarGroup = new THREE.Group();
+        scene.add(solarGroup);
+
+        const earthGroup = new THREE.Group();
+        earthGroup.position.set(8.8, -2.4, 2.0);
+        solarGroup.add(earthGroup);
+
+        const earthGeo = new THREE.IcosahedronGeometry(4.8, 3);
+        const earthMat = new THREE.MeshStandardMaterial({
+            map: earthTexture,
+            flatShading: true,
+            roughness: 0.75,
+            metalness: 0.1
+        });
+        const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+        earthMesh.userData = { planetKey: 'earth' };
+        earthGroup.add(earthMesh);
+
+        const cloudGeo = new THREE.IcosahedronGeometry(5.02, 3);
+        const cloudMat = new THREE.MeshStandardMaterial({
+            map: cloudTexture,
+            transparent: true,
+            opacity: 0.78,
+            flatShading: true,
+            depthWrite: false
+        });
+        const cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
+        earthGroup.add(cloudMesh);
+
+        const atmosGeo = new THREE.SphereGeometry(5.45, 32, 32);
+        const atmosMat = new THREE.ShaderMaterial({
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            side: THREE.BackSide,
+            uniforms: {
+                glowColor: { value: new THREE.Color(0x38bdf8) }
+            },
+            vertexShader: `
+                varying vec3 vNormal;
+                void main() {
+                    vNormal = normalize(normalMatrix * normal);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 glowColor;
+                varying vec3 vNormal;
+                void main() {
+                    float intensity = pow(0.68 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+                    gl_FragColor = vec4(glowColor, intensity * 0.85);
+                }
+            `
+        });
+        const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
+        earthGroup.add(atmosMesh);
+
+        const marsGroup = new THREE.Group();
+        marsGroup.position.set(-12.5, 6.2, -5.0);
+        solarGroup.add(marsGroup);
+
+        const marsGeo = new THREE.IcosahedronGeometry(2.3, 2);
+        const marsPos = marsGeo.attributes.position;
+        for (let i = 0; i < marsPos.count; i++) {
+            const vx = marsPos.getX(i);
+            const vy = marsPos.getY(i);
+            const vz = marsPos.getZ(i);
+            const offset = 1 + (Math.sin(vx * 3.1) * Math.cos(vy * 3.1) * 0.045);
+            marsPos.setXYZ(i, vx * offset, vy * offset, vz * offset);
+        }
+        marsGeo.computeVertexNormals();
+
+        const marsMat = new THREE.MeshStandardMaterial({
+            map: marsTexture,
+            flatShading: true,
+            roughness: 0.88,
+            metalness: 0.05
+        });
+        const marsMesh = new THREE.Mesh(marsGeo, marsMat);
+        marsMesh.userData = { planetKey: 'mars' };
+        marsGroup.add(marsMesh);
+
+        const moonBasePos = { x: -1.2, y: 5.8, z: 3.5 };
+        const moonGroup = new THREE.Group();
+        moonGroup.position.set(moonBasePos.x, moonBasePos.y, moonBasePos.z);
+        solarGroup.add(moonGroup);
+
+        const moonGeo = new THREE.IcosahedronGeometry(1.35, 2);
+        const moonPos = moonGeo.attributes.position;
+        for (let i = 0; i < moonPos.count; i++) {
+            const vx = moonPos.getX(i);
+            const vy = moonPos.getY(i);
+            const vz = moonPos.getZ(i);
+            const craterNoise = 1 + (Math.cos(vx * 4.5 + vy * 3.2) * 0.055);
+            moonPos.setXYZ(i, vx * craterNoise, vy * craterNoise, vz * craterNoise);
+        }
+        moonGeo.computeVertexNormals();
+
+        const moonMat = new THREE.MeshStandardMaterial({
+            map: moonTexture,
+            flatShading: true,
+            roughness: 0.92,
+            metalness: 0.05
+        });
+        const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+        moonMesh.userData = { planetKey: 'moon' };
+        moonGroup.add(moonMesh);
+
+        const orbitRingGeo = new THREE.RingGeometry(6.1, 6.16, 64);
+        const orbitRingMat = new THREE.MeshBasicMaterial({
+            color: 0xf97316,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.25
+        });
+        const orbitRing = new THREE.Mesh(orbitRingGeo, orbitRingMat);
+        orbitRing.rotation.x = Math.PI / 2.4;
+        orbitRing.rotation.y = -0.25;
+        earthGroup.add(orbitRing);
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let targetMouseX = 0;
+        let targetMouseY = 0;
+
+        const interactiveMeshes = [earthMesh, marsMesh, moonMesh];
+
+        const CAMERA_TARGETS = {
+            earth: { x: 2.5, y: -0.8, z: 24 },
+            moon: { x: -1.0, y: 3.5, z: 19 },
+            mars: { x: -7.5, y: 4.0, z: 19.5 }
+        };
+        let desiredCamPos = { x: 0, y: 0, z: 28 };
+
+        function selectPlanet(key, shouldOpenCard = true) {
+            playBeep(620, 0.07);
+            if (shouldOpenCard) {
+                updateTelemetryUI(key);
+            }
+            if (CAMERA_TARGETS[key]) {
+                desiredCamPos = { ...CAMERA_TARGETS[key] };
+            }
+        }
+
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            targetMouseX = mouse.x * 1.4;
+            targetMouseY = mouse.y * 0.9;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(interactiveMeshes);
+
+            if (intersects.length > 0) {
+                document.body.style.cursor = 'pointer';
+            } else {
+                document.body.style.cursor = 'default';
+            }
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target.closest('button, a, input, select, aside')) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(interactiveMeshes);
+            if (intersects.length > 0) {
+                const hitKey = intersects[0].object.userData.planetKey;
+                selectPlanet(hitKey, true);
+            }
+        });
+
+        function applyResponsiveSpacing() {
+            if (window.innerWidth < 768) {
+                earthGroup.position.set(4.5, -4.5, 0);
+                marsGroup.position.set(-6.5, 7.2, -5.0);
+                moonBasePos.x = 0.5;
+                moonBasePos.y = 5.2;
+            } else {
+                earthGroup.position.set(8.8, -2.4, 2.0);
+                marsGroup.position.set(-12.5, 6.2, -5.0);
+                moonBasePos.x = -1.2;
+                moonBasePos.y = 5.8;
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            applyResponsiveSpacing();
+        });
+        applyResponsiveSpacing();
+
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsed = clock.getElapsedTime();
+
+            earthMesh.rotation.y += 0.0022;
+            cloudMesh.rotation.y += 0.0031;
+            cloudMesh.rotation.x = Math.sin(elapsed * 0.2) * 0.04;
+
+            marsMesh.rotation.y += 0.0035;
+            moonMesh.rotation.y += 0.004;
+
+            moonGroup.position.x = moonBasePos.x + Math.cos(elapsed * 0.25) * 0.55;
+            moonGroup.position.y = moonBasePos.y + Math.sin(elapsed * 0.25) * 0.4;
+
+            starField.position.copy(camera.position);
+            starField.rotation.y = elapsed * 0.006;
+
+            const swayX = Math.sin(elapsed * 0.4) * 0.35;
+            const swayY = Math.cos(elapsed * 0.3) * 0.25;
+
+            camera.position.x += ((desiredCamPos.x + targetMouseX + swayX) - camera.position.x) * 0.04;
+            camera.position.y += ((desiredCamPos.y + targetMouseY + swayY) - camera.position.y) * 0.04;
+            camera.position.z += (desiredCamPos.z - camera.position.z) * 0.04;
+            camera.lookAt(0, 0, 0);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        function openMissionModal(contextLabel) {
+            playBeep(780, 0.08);
+            const modal = document.getElementById('mission-modal');
+            const tag = document.getElementById('modal-tag');
+            const destSelect = document.getElementById('modal-destination');
+            const feedback = document.getElementById('modal-feedback');
+
+            feedback.classList.add('hidden');
+            if (contextLabel) {
+                tag.innerText = `UPLINK // ${contextLabel}`;
+                if (contextLabel.includes('MOON')) destSelect.selectedIndex = 1;
+                else if (contextLabel.includes('MARS')) destSelect.selectedIndex = 2;
+                else destSelect.selectedIndex = 0;
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeMissionModal() {
+            playBeep(420, 0.05);
+            const modal = document.getElementById('mission-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function handleMissionSubmit(e) {
+            e.preventDefault();
+            playBeep(880, 0.12);
+            const feedback = document.getElementById('modal-feedback');
+            feedback.classList.remove('hidden');
+            setTimeout(() => {
+                closeMissionModal();
+            }, 1800);
+        }
+
+        document.getElementById('mission-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'mission-modal') closeMissionModal();
+        });
+    </script>
 </body>
 </html>
